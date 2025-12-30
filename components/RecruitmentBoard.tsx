@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Candidate, CandidateStage } from '../types';
-import { MoreHorizontal, Star, AlertCircle, CheckCircle2, Upload, Plus } from 'lucide-react';
+import { MoreHorizontal, Star, AlertCircle, CheckCircle2, Upload, Plus, UserPlus } from 'lucide-react';
 
 interface RecruitmentBoardProps {
   candidates: Candidate[];
@@ -51,8 +51,8 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({ candidates, onSelec
             onClick={onUploadResume}
             className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm transition-colors text-sm font-medium"
           >
-            <Upload size={16} />
-            Upload Resume
+            <UserPlus size={16} />
+            Add Candidate
           </button>
       </div>
     

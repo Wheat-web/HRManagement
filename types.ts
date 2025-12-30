@@ -87,7 +87,7 @@ export interface Employee {
   role: string;
   department: string;
   email: string;
-  status: 'Active' | 'On Leave' | 'Terminated';
+  status: 'Active' | 'On Leave' | 'Terminated' | 'Onboarding';
   joinDate: string;
   salary: number;
   currency: string;
@@ -218,4 +218,34 @@ export interface Interview {
   status: 'Scheduled' | 'Completed' | 'Cancelled';
   meetingLink?: string;
   notes?: string;
+}
+
+export interface RoleDefinition {
+  id: string;
+  name: string;
+  description: string;
+  usersCount: number;
+  isSystem: boolean; // Cannot delete system roles
+  permissions: string[]; // List of permission IDs
+}
+
+export interface OnboardingTask {
+  id: string;
+  category: 'IT' | 'HR' | 'Training' | 'Team' | 'Admin';
+  task: string;
+  isCompleted: boolean;
+}
+
+export interface OnboardingPhase {
+  id: string;
+  name: string; // "Pre-boarding", "Day 1", "Week 1", "Month 1"
+  tasks: OnboardingTask[];
+}
+
+export interface OnboardingPlan {
+  employeeId: string;
+  employeeName: string;
+  role: string;
+  phases: OnboardingPhase[];
+  welcomeMessage: string;
 }

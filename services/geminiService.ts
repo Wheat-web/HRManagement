@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { Candidate, RecruitmentPlan } from "../types";
+import { Candidate, RecruitmentPlan, OnboardingPlan } from "../types";
 
 const apiKey = process.env.API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
@@ -88,7 +88,7 @@ export const analyzeCandidate = async (candidate: Candidate, jobDescription: str
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -182,7 +182,7 @@ export const analyzeLeaveRequest = async (description: string, employeeName: str
   }
 };
 
-export const generateRecruitmentPlan = async (goal: string): Promise<RecruitmentPlan> => {
+export const generateRecruitmentPlan = async (goal: string, currentPlan?: RecruitmentPlan, refinement?: string): Promise<RecruitmentPlan> => {
   if (!isAiAvailable()) {
     return {
       timeline: "Q3 - Q4 2024",
@@ -199,13 +199,28 @@ export const generateRecruitmentPlan = async (goal: string): Promise<Recruitment
   }
 
   try {
-    const prompt = `
-      Act as a Senior HR Strategist. Create a detailed recruitment plan based on the following goal: "${goal}".
-      Include a timeline, estimated budget (conservative), and breakdown of hiring phases with roles and strategy.
-    `;
+    let prompt = '';
+    
+    if (currentPlan && refinement) {
+      prompt = `
+        Act as a Senior HR Strategist. 
+        I have an existing recruitment plan: ${JSON.stringify(currentPlan)}
+        
+        Please modify this plan based on the following refinement request from the Hiring Manager: "${refinement}".
+        
+        Maintain the same JSON structure. Adjust the timeline, budget, hiring phases, or roles as requested.
+        Be strategic and realistic with the adjustments.
+      `;
+    } else {
+      prompt = `
+        Act as a Senior HR Strategist. Create a detailed recruitment plan based on the following goal: "${goal}".
+        Include a timeline, estimated budget (conservative), and breakdown of hiring phases with roles and strategy.
+        Be specific about roles and seniority levels needed to achieve the goal.
+      `;
+    }
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -335,6 +350,92 @@ export const draftProfessionalEmail = async (
     return JSON.parse(response.text || '{}');
   } catch (error) {
     console.error("Email drafting failed", error);
+    throw error;
+  }
+};
+
+export const generateOnboardingPlan = async (name: string, role: string, department: string, refinement?: string, currentPlan?: OnboardingPlan) => {
+  if (!isAiAvailable()) {
+    // Mock Response
+    return {
+      employeeName: name,
+      employeeId: 'mock_id',
+      role,
+      welcomeMessage: `Dear ${name}, Welcome to the team! We are excited to have you join as a ${role}.`,
+      phases: [
+        { 
+          id: 'p1', name: 'Pre-boarding', 
+          tasks: [{id: 't1', category: 'IT', task: 'Laptop Setup', isCompleted: false}] 
+        },
+        { 
+          id: 'p2', name: 'Week 1', 
+          tasks: [{id: 't2', category: 'Training', task: 'Company Orientation', isCompleted: false}] 
+        }
+      ]
+    } as OnboardingPlan;
+  }
+
+  try {
+    const prompt = `
+      Act as an expert HR Onboarding Specialist. Create a personalized onboarding plan for:
+      Name: ${name}
+      Role: ${role}
+      Department: ${department}
+      ${refinement ? `\nRefinement Request: ${refinement}\nExisting Plan Context: ${JSON.stringify(currentPlan)}` : ''}
+
+      Generate a structured plan with phases: "Pre-boarding", "Day 1", "Week 1", and "Month 1".
+      For each phase, list specific, actionable tasks categorized by 'IT', 'HR', 'Training', 'Team', or 'Admin'.
+      Also include a warm, professional welcome email draft customized for this role.
+
+      The tasks should be specific to the role (e.g., if Developer, include setting up Git access; if Sales, include CRM training).
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            welcomeMessage: { type: Type.STRING, description: "A draft welcome email" },
+            phases: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  name: { type: Type.STRING },
+                  tasks: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        id: { type: Type.STRING },
+                        category: { type: Type.STRING },
+                        task: { type: Type.STRING },
+                        isCompleted: { type: Type.BOOLEAN }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const data = JSON.parse(response.text || '{}');
+    return {
+      employeeName: name,
+      employeeId: currentPlan?.employeeId || `emp_${Date.now()}`,
+      role,
+      ...data
+    } as OnboardingPlan;
+
+  } catch (error) {
+    console.error("Onboarding Plan generation failed", error);
     throw error;
   }
 };

@@ -1,5 +1,5 @@
 
-import { Candidate, CandidateStage, Role, AuditLog, PolicyDocument, HROpsRequest, Department, Employee, PayrollRecord, LeaveRecord, CompensationChange, PerformanceReview, LetterTemplate, Shift, AttendanceRecord, Message, Interview } from './types';
+import { Candidate, CandidateStage, Role, AuditLog, PolicyDocument, HROpsRequest, Department, Employee, PayrollRecord, LeaveRecord, CompensationChange, PerformanceReview, LetterTemplate, Shift, AttendanceRecord, Message, Interview, RoleDefinition } from './types';
 
 export const MOCK_SHIFTS: Shift[] = [
   { id: 'sh1', name: 'General Shift', startTime: '09:00', endTime: '18:00', color: 'bg-blue-100 text-blue-800' },
@@ -242,4 +242,61 @@ export const MOCK_INTERVIEWS: Interview[] = [
   { id: 'i1', candidateId: 'c3', candidateName: 'Charlie Davis', role: 'Product Manager', interviewerId: 'e4', interviewerName: 'Chris Evans', date: TODAY, time: '14:00', duration: 60, type: 'Cultural Fit', status: 'Scheduled', meetingLink: 'https://meet.google.com/abc-defg-hij' },
   { id: 'i2', candidateId: 'c2', candidateName: 'Bob Smith', role: 'Senior Frontend Engineer', interviewerId: 'e1', interviewerName: 'Jane Doe', date: TODAY, time: '10:00', duration: 45, type: 'Technical', status: 'Completed', meetingLink: 'https://meet.google.com/xyz-uvw-rst' },
   { id: 'i3', candidateId: 'c4', candidateName: 'Diana Prince', role: 'UX Designer', interviewerId: 'e1', interviewerName: 'Jane Doe', date: '2023-10-30', time: '11:00', duration: 60, type: 'Technical', status: 'Scheduled', meetingLink: 'https://meet.google.com/qwe-rty-uio' },
+];
+
+export const MOCK_ROLE_DEFINITIONS: RoleDefinition[] = [
+  { 
+    id: 'r_admin', 
+    name: 'HR Admin', 
+    description: 'Full system access to all modules and settings.', 
+    usersCount: 2, 
+    isSystem: true,
+    permissions: ['all'] 
+  },
+  { 
+    id: 'r_recruiter', 
+    name: 'Recruiter', 
+    description: 'Can manage candidates, schedule interviews, and view job requisitions.', 
+    usersCount: 3, 
+    isSystem: true,
+    permissions: ['view_candidates', 'edit_candidates', 'schedule_interviews', 'view_jobs'] 
+  },
+  { 
+    id: 'r_manager', 
+    name: 'Hiring Manager', 
+    description: 'Can view candidates, conduct interviews, and manage team performance.', 
+    usersCount: 8, 
+    isSystem: true,
+    permissions: ['view_candidates', 'conduct_interviews', 'view_team_performance', 'approve_leaves'] 
+  },
+  { 
+    id: 'r_employee', 
+    name: 'Employee', 
+    description: 'Standard access to personal dashboard, leaves, and payroll.', 
+    usersCount: 45, 
+    isSystem: true,
+    permissions: ['view_self', 'request_leave', 'view_payslips'] 
+  },
+  {
+    id: 'r_intern',
+    name: 'Intern',
+    description: 'Limited access for temporary staff.',
+    usersCount: 5,
+    isSystem: false,
+    permissions: ['view_self']
+  }
+];
+
+export const PERMISSIONS_LIST = [
+  { id: 'view_candidates', label: 'View Candidates', category: 'Recruitment' },
+  { id: 'edit_candidates', label: 'Edit Candidates', category: 'Recruitment' },
+  { id: 'schedule_interviews', label: 'Schedule Interviews', category: 'Recruitment' },
+  { id: 'view_jobs', label: 'View Job Requisitions', category: 'Recruitment' },
+  { id: 'approve_leaves', label: 'Approve Leaves', category: 'HR Operations' },
+  { id: 'view_payroll', label: 'View Payroll Data', category: 'HR Operations' },
+  { id: 'manage_policies', label: 'Manage Policies', category: 'HR Operations' },
+  { id: 'view_team_performance', label: 'View Team Performance', category: 'Performance' },
+  { id: 'conduct_interviews', label: 'Conduct Interviews', category: 'Recruitment' },
+  { id: 'manage_users', label: 'Manage Users & Roles', category: 'System' },
+  { id: 'view_reports', label: 'View Reports', category: 'Analytics' },
 ];

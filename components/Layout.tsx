@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   LayoutDashboard, 
@@ -18,7 +19,9 @@ import {
   TrendingUp,
   Clock,
   CalendarCheck,
-  Mail
+  Mail,
+  Lock,
+  UserPlus
 } from 'lucide-react';
 import { Role } from '../types';
 
@@ -61,6 +64,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentRole, onRoleChange, cu
     ];
 
     if (currentRole === Role.ADMIN || currentRole === Role.MANAGER) {
+      opsItems.push({ id: 'onboarding', label: 'Onboarding Hub', icon: <UserPlus size={20} /> });
       opsItems.push({ id: 'salary', label: 'Salary Management', icon: <DollarSign size={20} /> });
       opsItems.push({ id: 'productivity', label: 'Productivity', icon: <TrendingUp size={20} /> });
     }
@@ -71,6 +75,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentRole, onRoleChange, cu
       opsItems.push({ id: 'messages', label: 'Official Mail', icon: <Mail size={20} />, badge: unreadMessagesCount });
       opsItems.push({ id: 'planner', label: 'Recruitment Planner', icon: <CalendarRange size={20} /> });
       opsItems.push({ id: 'organization', label: 'Organization', icon: <Building2 size={20} /> });
+      opsItems.push({ id: 'roles', label: 'Roles & Permissions', icon: <Lock size={20} /> });
       opsItems.push({ id: 'reports', label: 'Reports', icon: <BarChart3 size={20} /> });
       opsItems.push({ id: 'hrops', label: 'HR Operations', icon: <ClipboardList size={20} /> });
       opsItems.push({ id: 'compliance', label: 'Compliance & Audit', icon: <ShieldCheck size={20} /> });

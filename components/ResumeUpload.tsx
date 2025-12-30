@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, FileText, Check, AlertCircle, Loader2, X } from 'lucide-react';
+import { Upload, FileText, Check, AlertCircle, Loader2, X, PenTool, User } from 'lucide-react';
 import { parseResume } from '../services/geminiService';
 import { Candidate, CandidateStage } from '../types';
 
@@ -9,6 +9,9 @@ interface ResumeUploadProps {
 }
 
 const ResumeUpload: React.FC<ResumeUploadProps> = ({ onClose, onAddCandidate }) => {
+  const [activeTab, setActiveTab] = useState<'upload' | 'manual'>('upload');
+  
+  // Upload State
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
@@ -16,6 +19,17 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onClose, onAddCandidate }) 
   const [parsedData, setParsedData] = useState<Partial<Candidate> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Manual Form State
+  const [manualData, setManualData] = useState({
+    name: '',
+    email: '',
+    role: '',
+    experience: '',
+    skills: '',
+    summary: ''
+  });
+
+  // --- Upload Handlers ---
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -71,17 +85,34 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onClose, onAddCandidate }) 
     }
   };
 
+  // --- Submit Logic ---
   const handleConfirm = () => {
-    if (!parsedData) return;
+    let candidateData: Partial<Candidate> = {};
+
+    if (activeTab === 'upload') {
+      if (!parsedData) return;
+      candidateData = parsedData;
+    } else {
+      // Manual Mode
+      if (!manualData.name || !manualData.role) return;
+      candidateData = {
+        name: manualData.name,
+        email: manualData.email,
+        role: manualData.role,
+        experience: Number(manualData.experience) || 0,
+        skills: manualData.skills.split(',').map(s => s.trim()).filter(s => s),
+        resumeSummary: manualData.summary
+      };
+    }
     
     const newCandidate: Candidate = {
       id: `c${Date.now()}`,
-      name: parsedData.name || "Unknown Candidate",
-      role: parsedData.role || "Applicant",
-      email: parsedData.email || "",
-      experience: parsedData.experience || 0,
-      skills: parsedData.skills || [],
-      resumeSummary: parsedData.resumeSummary || "",
+      name: candidateData.name || "Unknown Candidate",
+      role: candidateData.role || "Applicant",
+      email: candidateData.email || "",
+      experience: candidateData.experience || 0,
+      skills: candidateData.skills || [],
+      resumeSummary: candidateData.resumeSummary || "",
       stage: CandidateStage.NEW,
       appliedDate: new Date().toLocaleDateString(),
     };
@@ -89,97 +120,187 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onClose, onAddCandidate }) 
     onAddCandidate(newCandidate);
   };
 
+  const isFormValid = activeTab === 'upload' 
+    ? (!!parsedData && !isParsing && !error) 
+    : (!!manualData.name && !!manualData.role && !!manualData.email);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden">
+      <div className="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Header */}
         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-          <h3 className="font-bold text-slate-800">Upload Resume</h3>
+          <h3 className="font-bold text-slate-800">Add Candidate</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
         </div>
 
-        <div className="p-6">
-          {!file ? (
-            <div 
-              className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 hover:border-indigo-400'}`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.txt,.doc,.docx" />
-              <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Upload size={24} />
-              </div>
-              <p className="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
-              <p className="text-xs text-slate-400 mt-1">PDF, DOCX, TXT (Max 5MB)</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-               <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                  <FileText className="text-indigo-600" size={24} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900 truncate">{file.name}</p>
-                    <p className="text-xs text-slate-500">{(file.size / 1024).toFixed(0)} KB</p>
+        {/* Tabs */}
+        <div className="flex border-b border-slate-200">
+          <button 
+            onClick={() => setActiveTab('upload')}
+            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'upload' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            <Upload size={16} /> Get from Resume
+          </button>
+          <button 
+            onClick={() => setActiveTab('manual')}
+            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'manual' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            <PenTool size={16} /> Manual Entry
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 overflow-y-auto">
+          {activeTab === 'upload' ? (
+            // Upload View
+            <>
+              {!file ? (
+                <div 
+                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 hover:border-indigo-400'}`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.txt,.doc,.docx" />
+                  <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Upload size={24} />
                   </div>
-                  <button onClick={() => { setFile(null); setParsedData(null); setError(null); }} className="text-slate-400 hover:text-red-500">
-                    <X size={16} />
-                  </button>
+                  <p className="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                  <p className="text-xs text-slate-400 mt-1">PDF, DOCX, TXT (Max 5MB)</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                   <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      <FileText className="text-indigo-600" size={24} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">{file.name}</p>
+                        <p className="text-xs text-slate-500">{(file.size / 1024).toFixed(0)} KB</p>
+                      </div>
+                      <button onClick={() => { setFile(null); setParsedData(null); setError(null); }} className="text-slate-400 hover:text-red-500">
+                        <X size={16} />
+                      </button>
+                   </div>
+
+                   {isParsing && (
+                     <div className="text-center py-8 text-slate-500 flex flex-col items-center gap-3">
+                       <Loader2 size={32} className="animate-spin text-indigo-600" />
+                       <p className="text-sm">AI Agent is analyzing the resume...</p>
+                     </div>
+                   )}
+
+                   {error && (
+                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-2">
+                        <AlertCircle size={18} className="mt-0.5 flex-shrink-0" />
+                        <div className="text-sm">
+                           <p className="font-bold">Analysis Failed</p>
+                           <p>{error}</p>
+                        </div>
+                     </div>
+                   )}
+
+                   {parsedData && (
+                     <div className="bg-white border border-emerald-100 rounded-lg p-4 shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                        <div className="flex items-center gap-2 text-emerald-700 font-bold mb-3 text-sm">
+                          <Check size={16} /> Analysis Complete
+                        </div>
+                        <div className="space-y-3 text-sm">
+                          <div>
+                            <label className="text-xs text-slate-500 block">Candidate Name</label>
+                            <input 
+                               value={parsedData.name || ''} 
+                               onChange={(e) => setParsedData({...parsedData, name: e.target.value})}
+                               className="w-full border-b border-slate-200 py-1 focus:outline-none focus:border-indigo-500 bg-transparent font-medium" 
+                            />
+                          </div>
+                          <div>
+                             <label className="text-xs text-slate-500 block">Role</label>
+                             <input 
+                               value={parsedData.role || ''} 
+                               onChange={(e) => setParsedData({...parsedData, role: e.target.value})}
+                               className="w-full border-b border-slate-200 py-1 focus:outline-none focus:border-indigo-500 bg-transparent" 
+                             />
+                          </div>
+                          <div>
+                             <label className="text-xs text-slate-500 block">Skills Detected</label>
+                             <div className="flex flex-wrap gap-1 mt-1">
+                               {parsedData.skills?.map((skill, i) => (
+                                 <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">{skill}</span>
+                               ))}
+                             </div>
+                          </div>
+                          <div>
+                             <label className="text-xs text-slate-500 block">Summary</label>
+                             <p className="text-xs text-slate-600 mt-1 leading-relaxed bg-slate-50 p-2 rounded">{parsedData.resumeSummary}</p>
+                          </div>
+                        </div>
+                     </div>
+                   )}
+                </div>
+              )}
+            </>
+          ) : (
+            // Manual View
+            <div className="space-y-4">
+               <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Full Name <span className="text-red-500">*</span></label>
+                  <input 
+                    value={manualData.name}
+                    onChange={(e) => setManualData({...manualData, name: e.target.value})}
+                    placeholder="e.g. John Doe"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                  />
                </div>
-
-               {isParsing && (
-                 <div className="text-center py-8 text-slate-500 flex flex-col items-center gap-3">
-                   <Loader2 size={32} className="animate-spin text-indigo-600" />
-                   <p className="text-sm">AI Agent is analyzing the resume...</p>
-                 </div>
-               )}
-
-               {error && (
-                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-2">
-                    <AlertCircle size={18} className="mt-0.5 flex-shrink-0" />
-                    <div className="text-sm">
-                       <p className="font-bold">Analysis Failed</p>
-                       <p>{error}</p>
-                    </div>
-                 </div>
-               )}
-
-               {parsedData && (
-                 <div className="bg-white border border-emerald-100 rounded-lg p-4 shadow-sm animate-in fade-in slide-in-from-bottom-2">
-                    <div className="flex items-center gap-2 text-emerald-700 font-bold mb-3 text-sm">
-                      <Check size={16} /> Analysis Complete
-                    </div>
-                    <div className="space-y-3 text-sm">
-                      <div>
-                        <label className="text-xs text-slate-500 block">Candidate Name</label>
-                        <input 
-                           value={parsedData.name || ''} 
-                           onChange={(e) => setParsedData({...parsedData, name: e.target.value})}
-                           className="w-full border-b border-slate-200 py-1 focus:outline-none focus:border-indigo-500 bg-transparent font-medium" 
-                        />
-                      </div>
-                      <div>
-                         <label className="text-xs text-slate-500 block">Role</label>
-                         <input 
-                           value={parsedData.role || ''} 
-                           onChange={(e) => setParsedData({...parsedData, role: e.target.value})}
-                           className="w-full border-b border-slate-200 py-1 focus:outline-none focus:border-indigo-500 bg-transparent" 
-                         />
-                      </div>
-                      <div>
-                         <label className="text-xs text-slate-500 block">Skills Detected</label>
-                         <div className="flex flex-wrap gap-1 mt-1">
-                           {parsedData.skills?.map((skill, i) => (
-                             <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">{skill}</span>
-                           ))}
-                         </div>
-                      </div>
-                      <div>
-                         <label className="text-xs text-slate-500 block">Summary</label>
-                         <p className="text-xs text-slate-600 mt-1 leading-relaxed bg-slate-50 p-2 rounded">{parsedData.resumeSummary}</p>
-                      </div>
-                    </div>
-                 </div>
-               )}
+               <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email <span className="text-red-500">*</span></label>
+                    <input 
+                      value={manualData.email}
+                      onChange={(e) => setManualData({...manualData, email: e.target.value})}
+                      placeholder="email@example.com"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Target Role <span className="text-red-500">*</span></label>
+                    <input 
+                      value={manualData.role}
+                      onChange={(e) => setManualData({...manualData, role: e.target.value})}
+                      placeholder="e.g. Product Manager"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                    />
+                  </div>
+               </div>
+               <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Experience (Years)</label>
+                    <input 
+                      type="number"
+                      value={manualData.experience}
+                      onChange={(e) => setManualData({...manualData, experience: e.target.value})}
+                      placeholder="e.g. 5"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Skills (Comma sep)</label>
+                    <input 
+                      value={manualData.skills}
+                      onChange={(e) => setManualData({...manualData, skills: e.target.value})}
+                      placeholder="e.g. React, Node.js, Agile"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                    />
+                  </div>
+               </div>
+               <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Professional Summary</label>
+                  <textarea 
+                    value={manualData.summary}
+                    onChange={(e) => setManualData({...manualData, summary: e.target.value})}
+                    placeholder="Brief overview of candidate's background..."
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm h-24 resize-none"
+                  />
+               </div>
             </div>
           )}
         </div>
@@ -187,11 +308,11 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onClose, onAddCandidate }) 
         <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
           <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:text-slate-800 text-sm font-medium">Cancel</button>
           <button 
-            disabled={!parsedData || isParsing || !!error}
+            disabled={!isFormValid}
             onClick={handleConfirm}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
           >
-            Add to Pipeline
+            {activeTab === 'upload' ? 'Add to Pipeline' : 'Create Candidate'}
           </button>
         </div>
       </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -17,6 +18,8 @@ import MessageBox from './components/MessageBox';
 import Settings from './components/Settings';
 import InterviewSchedule from './components/InterviewSchedule';
 import PolicyManagement from './components/PolicyManagement';
+import RoleManagement from './components/RoleManagement';
+import OnboardingHub from './components/OnboardingHub';
 import { MOCK_CANDIDATES, MOCK_AUDIT_LOGS, MOCK_DEPARTMENTS, MOCK_EMPLOYEES, MOCK_MESSAGES } from './constants';
 import { Candidate, Role, CandidateStage, AuditLog, Message } from './types';
 import { ToastProvider } from './context/ToastContext';
@@ -132,6 +135,10 @@ function App() {
         return <Settings role={currentRole} />;
       case 'policies':
          return <PolicyManagement />;
+      case 'roles':
+         return <RoleManagement />;
+      case 'onboarding':
+         return <OnboardingHub candidates={candidates} />;
       default:
         return <Dashboard role={currentRole} />;
     }
