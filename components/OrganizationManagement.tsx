@@ -8,18 +8,30 @@ interface OrganizationManagementProps {
   initialDepartments: Department[];
   initialEmployees: Employee[];
   candidates?: Candidate[];
+  onAddEmployee?: (emp: Employee) => void;
+  onAddDepartment?: (dept: Department) => void;
 }
 
-const OrganizationManagement: React.FC<OrganizationManagementProps> = ({ initialDepartments, initialEmployees, candidates = [] }) => {
+const OrganizationManagement: React.FC<OrganizationManagementProps> = ({ 
+  initialDepartments, 
+  initialEmployees, 
+  candidates = [],
+  onAddEmployee,
+  onAddDepartment
+}) => {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'departments' | 'employees'>('departments');
   const [departments, setDepartments] = useState<Department[]>(initialDepartments);
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
 
-  // Sync state with props
+  // Sync state with props when switching views or updates occur
   useEffect(() => {
     setEmployees(initialEmployees);
   }, [initialEmployees]);
+
+  useEffect(() => {
+    setDepartments(initialDepartments);
+  }, [initialDepartments]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<any>({});
@@ -95,7 +107,12 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = ({ initial
         location: formData.location || 'Headquarters',
         headCount: 0
       };
-      setDepartments([...departments, newDept]);
+      
+      if (onAddDepartment) {
+        onAddDepartment(newDept);
+      } else {
+        setDepartments([...departments, newDept]);
+      }
     } else {
       // Process custom fields into a record object
       const attributes: Record<string, string> = {};
@@ -117,7 +134,12 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = ({ initial
         shiftId: 'sh1', // Default to General Shift
         customAttributes: attributes
       };
-      setEmployees([...employees, newEmp]);
+      
+      if (onAddEmployee) {
+        onAddEmployee(newEmp);
+      } else {
+        setEmployees([...employees, newEmp]);
+      }
     }
     setIsModalOpen(false);
     setFormData({});
@@ -295,7 +317,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = ({ initial
                           <option value="">-- Manual Entry (Blank) --</option>
                           
                           {availableCandidates.length > 0 && (
-                            <optgroup label="Recruitment Candidates (OnBoarded)">
+                            <optgroup label="Recruitment Candidates (Offer Stage)">
                                 {availableCandidates.map(c => (
                                     <option key={c.id} value={`candidate:${c.id}`}>{c.name} - {c.role}</option>
                                 ))}

@@ -1,16 +1,19 @@
+
 import React, { useState } from 'react';
 import { MOCK_HR_REQUESTS, MOCK_POLICIES, MOCK_EMPLOYEES, MOCK_LETTER_TEMPLATES, MOCK_SHIFTS, MOCK_PAYROLL, MOCK_ATTENDANCE } from '../constants';
-import { HROpsRequest, Role, AttendanceRecord, Message } from '../types';
-import { Search, Send, FileQuestion, CreditCard, CalendarDays, ChevronRight, Check, X, ClipboardList, User, DollarSign, FileText, Briefcase, Mail, PenTool, Printer, Bot, Clock, Wallet, Inbox, Calendar, Wand2, AlertTriangle, CheckCircle, TrendingUp, History, ArrowLeft } from 'lucide-react';
+import { HROpsRequest, Role, AttendanceRecord, Message, PayrollRecord } from '../types';
+import { Search, Send, FileQuestion, CreditCard, CalendarDays, ChevronRight, Check, X, ClipboardList, User, DollarSign, FileText, Briefcase, Mail, PenTool, Printer, Bot, Clock, Wallet, Inbox, Calendar, Wand2, AlertTriangle, CheckCircle, TrendingUp, History, ArrowLeft, Loader2 } from 'lucide-react';
 import { answerPolicyQuestion, analyzeLeaveRequest } from '../services/geminiService';
 import { useToast } from '../context/ToastContext';
 
 interface HROpsProps {
   role: Role;
   onSendMessage?: (msg: Message) => void;
+  payrollRecords?: PayrollRecord[];
+  onProcessPayroll?: (ids: string[]) => void;
 }
 
-const HROps: React.FC<HROpsProps> = ({ role, onSendMessage }) => {
+const HROps: React.FC<HROpsProps> = ({ role, onSendMessage, payrollRecords = MOCK_PAYROLL, onProcessPayroll }) => {
   const { showToast } = useToast();
   const isAdmin = role === Role.ADMIN;
   // Initialize default view based on Role
@@ -28,6 +31,8 @@ const HROps: React.FC<HROpsProps> = ({ role, onSendMessage }) => {
 
   // Payroll History State
   const [showPayrollHistory, setShowPayrollHistory] = useState(false);
+  const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false);
+  const [isProcessingPayroll, setIsProcessingPayroll] = useState(false);
 
   // Communication State
   const [msgSubject, setMsgSubject] = useState('');
@@ -41,8 +46,12 @@ const HROps: React.FC<HROpsProps> = ({ role, onSendMessage }) => {
   // Use "Jane Doe" as the logged-in employee for demo purposes
   const currentUser = MOCK_EMPLOYEES.find(e => e.id === 'e1') || MOCK_EMPLOYEES[0];
   const currentShift = MOCK_SHIFTS.find(s => s.id === currentUser.shiftId);
-  const latestPayroll = MOCK_PAYROLL.find(p => p.employeeId === currentUser.id && p.period === 'Oct 2023');
-  const payrollHistory = MOCK_PAYROLL.filter(p => p.employeeId === currentUser.id).sort((a,b) => b.paymentDate && a.paymentDate ? b.paymentDate.localeCompare(a.paymentDate) : 0);
+  const latestPayroll = payrollRecords.find(p => p.employeeId === currentUser.id && p.period === 'Oct 2023');
+  const payrollHistory = payrollRecords.filter(p => p.employeeId === currentUser.id).sort((a,b) => b.paymentDate && a.paymentDate ? b.paymentDate.localeCompare(a.paymentDate) : 0);
+
+  // Admin Payroll Processing Data
+  const pendingPayrolls = payrollRecords.filter(p => p.status !== 'Processed');
+  const totalPendingAmount = pendingPayrolls.reduce((sum, p) => sum + p.netPay, 0);
 
   const handlePolicyAsk = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +114,18 @@ const HROps: React.FC<HROpsProps> = ({ role, onSendMessage }) => {
     setRepaymentMonths('1');
     showToast('Advance payment request submitted successfully!', 'success');
     setActiveView('overview'); // Go back to overview to see the request
+  };
+
+  const handleRunPayroll = () => {
+    if (onProcessPayroll) {
+      setIsProcessingPayroll(true);
+      setTimeout(() => {
+        onProcessPayroll(pendingPayrolls.map(p => p.id));
+        setIsProcessingPayroll(false);
+        setIsPayrollModalOpen(false);
+        showToast('Payroll processed successfully for all employees', 'success');
+      }, 2000);
+    }
   };
 
   const applyTemplate = (templateId: string) => {
@@ -204,13 +225,14 @@ const HROps: React.FC<HROpsProps> = ({ role, onSendMessage }) => {
             {isAdmin ? (
               <>
                 {[
-                  { label: 'Process Payroll', icon: <CreditCard className="text-emerald-600" /> },
-                  { label: 'Review Leaves', icon: <CalendarDays className="text-indigo-600" /> },
-                  { label: 'Onboard Employee', icon: <User className="text-blue-600" /> },
-                  { label: 'Policy Update', icon: <ClipboardList className="text-purple-600" /> },
+                  { label: 'Process Payroll', icon: <CreditCard className="text-emerald-600" />, action: () => setIsPayrollModalOpen(true) },
+                  { label: 'Review Leaves', icon: <CalendarDays className="text-indigo-600" />, action: () => {} },
+                  { label: 'Onboard Employee', icon: <User className="text-blue-600" />, action: () => {} },
+                  { label: 'Policy Update', icon: <ClipboardList className="text-purple-600" />, action: () => {} },
                 ].map((action, i) => (
                   <button 
                     key={i} 
+                    onClick={action.action}
                     className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all text-left group"
                   >
                     <div className="mb-4 bg-slate-50 w-12 h-12 rounded-lg flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
@@ -403,6 +425,7 @@ const HROps: React.FC<HROpsProps> = ({ role, onSendMessage }) => {
       {/* Employee Attendance View and other views unchanged ... */}
       {!isAdmin && activeView === 'attendance' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-2">
+            {/* ... Same as original ... */}
             <div className="md:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2"><Calendar size={18} /> Summary</h3>
                 <div className="space-y-4">
@@ -585,9 +608,20 @@ const HROps: React.FC<HROpsProps> = ({ role, onSendMessage }) => {
                             <span className="text-sm text-slate-600">Credited (Net Pay)</span>
                             <span className="font-bold text-slate-900">{latestPayroll.netPay.toLocaleString()} {currentUser.currency}</span>
                           </div>
-                          <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                            <span className="text-sm text-emerald-700 font-medium flex items-center gap-2"><Check size={14} /> Paid Amount</span>
-                            <span className="font-bold text-emerald-700">{latestPayroll.amountPaid.toLocaleString()} {currentUser.currency}</span>
+                          <div className={`flex justify-between items-center p-3 rounded-lg border ${
+                              latestPayroll.status === 'Processed' ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-slate-100'
+                          }`}>
+                            <span className={`text-sm font-medium flex items-center gap-2 ${
+                                latestPayroll.status === 'Processed' ? 'text-emerald-700' : 'text-slate-600'
+                            }`}>
+                                {latestPayroll.status === 'Processed' ? <Check size={14} /> : <Clock size={14} />} 
+                                Paid Amount
+                            </span>
+                            <span className={`font-bold ${
+                                latestPayroll.status === 'Processed' ? 'text-emerald-700' : 'text-slate-500'
+                            }`}>
+                                {latestPayroll.amountPaid.toLocaleString()} {currentUser.currency}
+                            </span>
                           </div>
                           {latestPayroll.amountPaid < latestPayroll.netPay && (
                               <div className="flex justify-between items-center p-3 bg-amber-50 rounded-lg border border-amber-100">
@@ -737,6 +771,85 @@ const HROps: React.FC<HROpsProps> = ({ role, onSendMessage }) => {
                    className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium"
                  >
                     <Send size={16} /> Send to HR
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Admin Payroll Processing Modal */}
+      {isPayrollModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+           <div className="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+              <div className="p-6 border-b border-slate-100">
+                 <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <CreditCard size={24} className="text-emerald-600" /> Process Monthly Payroll
+                 </h2>
+                 <p className="text-sm text-slate-500 mt-1">Review pending payments for Oct 2023.</p>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                 {/* Summary Stats */}
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 text-center">
+                       <span className="block text-2xl font-bold text-slate-900">{pendingPayrolls.length}</span>
+                       <span className="text-xs text-slate-500 font-bold uppercase">Pending Employees</span>
+                    </div>
+                    <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100 text-center">
+                       <span className="block text-2xl font-bold text-emerald-700">${totalPendingAmount.toLocaleString()}</span>
+                       <span className="text-xs text-emerald-600 font-bold uppercase">Total Net Pay</span>
+                    </div>
+                 </div>
+
+                 {/* Employee List Preview */}
+                 <div className="max-h-64 overflow-y-auto border border-slate-100 rounded-lg">
+                    <table className="w-full text-sm text-left">
+                       <thead className="bg-slate-50 sticky top-0">
+                          <tr>
+                             <th className="px-4 py-2 font-medium text-slate-600">Employee</th>
+                             <th className="px-4 py-2 font-medium text-slate-600 text-right">Net Amount</th>
+                          </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-100">
+                          {pendingPayrolls.map(p => (
+                             <tr key={p.id}>
+                                <td className="px-4 py-2 text-slate-700">{p.employeeName}</td>
+                                <td className="px-4 py-2 text-right font-mono">${p.netPay.toLocaleString()}</td>
+                             </tr>
+                          ))}
+                          {pendingPayrolls.length === 0 && (
+                             <tr>
+                                <td colSpan={2} className="px-4 py-8 text-center text-slate-400">
+                                   All payrolls for this period are processed.
+                                </td>
+                             </tr>
+                          )}
+                       </tbody>
+                    </table>
+                 </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+                 <button 
+                    onClick={() => setIsPayrollModalOpen(false)}
+                    className="px-4 py-2 text-slate-600 hover:text-slate-800 text-sm font-medium"
+                 >
+                    Cancel
+                 </button>
+                 <button 
+                    onClick={handleRunPayroll}
+                    disabled={pendingPayrolls.length === 0 || isProcessingPayroll}
+                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+                 >
+                    {isProcessingPayroll ? (
+                       <>
+                          <Loader2 size={16} className="animate-spin" /> Processing...
+                       </>
+                    ) : (
+                       <>
+                          <Check size={16} /> Confirm & Pay
+                       </>
+                    )}
                  </button>
               </div>
            </div>

@@ -21,7 +21,8 @@ import {
   CalendarCheck,
   Mail,
   Lock,
-  UserPlus
+  UserPlus,
+  CreditCard
 } from 'lucide-react';
 import { Role } from '../types';
 
@@ -65,7 +66,8 @@ const Layout: React.FC<LayoutProps> = ({ children, currentRole, onRoleChange, cu
 
     if (currentRole === Role.ADMIN || currentRole === Role.MANAGER) {
       opsItems.push({ id: 'onboarding', label: 'Onboarding Hub', icon: <UserPlus size={20} /> });
-      opsItems.push({ id: 'salary', label: 'Salary Management', icon: <DollarSign size={20} /> });
+      opsItems.push({ id: 'payroll', label: 'Payroll', icon: <CreditCard size={20} /> });
+      opsItems.push({ id: 'salary', label: 'Compensation', icon: <DollarSign size={20} /> });
       opsItems.push({ id: 'productivity', label: 'Productivity', icon: <TrendingUp size={20} /> });
     }
 

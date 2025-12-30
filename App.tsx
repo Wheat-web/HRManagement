@@ -11,6 +11,7 @@ import RecruitmentPlanner from './components/RecruitmentPlanner';
 import OrganizationManagement from './components/OrganizationManagement';
 import Reports from './components/Reports';
 import SalaryManagement from './components/SalaryManagement';
+import PayrollManagement from './components/PayrollManagement';
 import Productivity from './components/Productivity';
 import ShiftManagement from './components/ShiftManagement';
 import AttendanceManagement from './components/AttendanceManagement';
@@ -20,8 +21,8 @@ import InterviewSchedule from './components/InterviewSchedule';
 import PolicyManagement from './components/PolicyManagement';
 import RoleManagement from './components/RoleManagement';
 import OnboardingHub from './components/OnboardingHub';
-import { MOCK_CANDIDATES, MOCK_AUDIT_LOGS, MOCK_DEPARTMENTS, MOCK_EMPLOYEES, MOCK_MESSAGES } from './constants';
-import { Candidate, Role, CandidateStage, AuditLog, Message, Employee } from './types';
+import { MOCK_CANDIDATES, MOCK_AUDIT_LOGS, MOCK_DEPARTMENTS, MOCK_EMPLOYEES, MOCK_MESSAGES, MOCK_PAYROLL } from './constants';
+import { Candidate, Role, CandidateStage, AuditLog, Message, Employee, Department, PayrollRecord } from './types';
 import { ToastProvider } from './context/ToastContext';
 
 function App() {
@@ -33,8 +34,12 @@ function App() {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
-  // State for Employees (Lifted)
+  // State for Employees & Departments (Lifted)
   const [employees, setEmployees] = useState<Employee[]>(MOCK_EMPLOYEES);
+  const [departments, setDepartments] = useState<Department[]>(MOCK_DEPARTMENTS);
+
+  // State for Payroll
+  const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>(MOCK_PAYROLL);
 
   // State for Audit Logs
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(MOCK_AUDIT_LOGS);
@@ -65,6 +70,65 @@ function App() {
   const handleAddEmployee = (newEmployee: Employee) => {
     setEmployees(prev => [newEmployee, ...prev]);
     addAuditLog('Onboarding', `Created new employee record: ${newEmployee.name}`, false);
+  };
+
+  const handleAddDepartment = (newDept: Department) => {
+    setDepartments(prev => [...prev, newDept]);
+    addAuditLog('Org Management', `Created new department: ${newDept.name}`, false);
+  };
+
+  const handleProcessPayroll = (processedIds: string[]) => {
+    const today = new Date().toISOString().split('T')[0];
+    setPayrollRecords(prev => prev.map(record => 
+      processedIds.includes(record.id) 
+        ? { ...record, status: 'Processed', paymentDate: today, amountPaid: record.netPay } 
+        : record
+    ));
+    addAuditLog('Payroll', `Processed payroll payments for ${processedIds.length} employees`, false);
+  };
+
+  const handleUpdatePayroll = (updatedRecord: PayrollRecord) => {
+    setPayrollRecords(prev => prev.map(r => r.id === updatedRecord.id ? updatedRecord : r));
+    addAuditLog('Payroll Edit', `Updated payroll amounts for ${updatedRecord.employeeName}`, false);
+  };
+
+  const handleGeneratePayroll = (period: string) => {
+    // Check which employees already have a record for this period
+    const existingIds = payrollRecords
+      .filter(r => r.period === period)
+      .map(r => r.employeeId);
+
+    const eligibleEmployees = employees.filter(e => 
+      (e.status === 'Active' || e.status === 'On Leave') && 
+      !existingIds.includes(e.id)
+    );
+
+    if (eligibleEmployees.length === 0) return;
+
+    const newRecords: PayrollRecord[] = eligibleEmployees.map(e => {
+        const monthlyBase = Math.round(e.salary / 12);
+        // Simple mock logic for deductions (e.g. 20% tax + benefits)
+        const deductions = Math.round(monthlyBase * 0.22); 
+        const bonus = 0; // Default bonus
+        const netPay = monthlyBase + bonus - deductions;
+
+        return {
+            id: `pay_${period.replace(' ', '')}_${e.id}`,
+            employeeId: e.id,
+            employeeName: e.name,
+            department: e.department,
+            period: period,
+            baseSalary: monthlyBase,
+            bonus: bonus,
+            deductions: deductions,
+            netPay: netPay,
+            amountPaid: 0,
+            status: 'Pending'
+        };
+    });
+
+    setPayrollRecords(prev => [...prev, ...newRecords]);
+    addAuditLog('Payroll', `Generated ${newRecords.length} payroll records for ${period}`, true);
   };
 
   const addAuditLog = (action: string, details: string, isRisk: boolean) => {
@@ -113,7 +177,14 @@ function App() {
       case 'schedule':
         return <InterviewSchedule />;
       case 'hrops':
-        return <HROps role={currentRole} onSendMessage={handleSendMessage} />;
+        return (
+          <HROps 
+            role={currentRole} 
+            onSendMessage={handleSendMessage} 
+            payrollRecords={payrollRecords}
+            onProcessPayroll={handleProcessPayroll}
+          />
+        );
       case 'compliance':
         return <Compliance logs={auditLogs} />;
       case 'planner':
@@ -121,15 +192,27 @@ function App() {
       case 'organization':
         return (
           <OrganizationManagement 
-            initialDepartments={MOCK_DEPARTMENTS} 
+            initialDepartments={departments} 
             initialEmployees={employees}
             candidates={candidates} 
+            onAddEmployee={handleAddEmployee}
+            onAddDepartment={handleAddDepartment}
           />
         );
       case 'reports':
         return <Reports />;
       case 'salary':
         return <SalaryManagement />;
+      case 'payroll':
+        return (
+          <PayrollManagement 
+            employees={employees}
+            payrollRecords={payrollRecords}
+            onGeneratePayroll={handleGeneratePayroll}
+            onProcessPayroll={handleProcessPayroll}
+            onUpdatePayroll={handleUpdatePayroll}
+          />
+        );
       case 'productivity':
         return <Productivity />;
       case 'shifts':
