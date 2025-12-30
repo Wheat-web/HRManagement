@@ -21,7 +21,7 @@ import PolicyManagement from './components/PolicyManagement';
 import RoleManagement from './components/RoleManagement';
 import OnboardingHub from './components/OnboardingHub';
 import { MOCK_CANDIDATES, MOCK_AUDIT_LOGS, MOCK_DEPARTMENTS, MOCK_EMPLOYEES, MOCK_MESSAGES } from './constants';
-import { Candidate, Role, CandidateStage, AuditLog, Message } from './types';
+import { Candidate, Role, CandidateStage, AuditLog, Message, Employee } from './types';
 import { ToastProvider } from './context/ToastContext';
 
 function App() {
@@ -32,6 +32,9 @@ function App() {
   const [candidates, setCandidates] = useState<Candidate[]>(MOCK_CANDIDATES);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+  // State for Employees (Lifted)
+  const [employees, setEmployees] = useState<Employee[]>(MOCK_EMPLOYEES);
 
   // State for Audit Logs
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(MOCK_AUDIT_LOGS);
@@ -57,6 +60,11 @@ function App() {
     setCandidates(prev => [newCandidate, ...prev]);
     setIsUploadModalOpen(false);
     addAuditLog('Resume Upload', `Added new candidate: ${newCandidate.name}`, false);
+  };
+
+  const handleAddEmployee = (newEmployee: Employee) => {
+    setEmployees(prev => [newEmployee, ...prev]);
+    addAuditLog('Onboarding', `Created new employee record: ${newEmployee.name}`, false);
   };
 
   const addAuditLog = (action: string, details: string, isRisk: boolean) => {
@@ -111,7 +119,13 @@ function App() {
       case 'planner':
         return <RecruitmentPlanner />;
       case 'organization':
-        return <OrganizationManagement initialDepartments={MOCK_DEPARTMENTS} initialEmployees={MOCK_EMPLOYEES} />;
+        return (
+          <OrganizationManagement 
+            initialDepartments={MOCK_DEPARTMENTS} 
+            initialEmployees={employees}
+            candidates={candidates} 
+          />
+        );
       case 'reports':
         return <Reports />;
       case 'salary':
@@ -138,7 +152,7 @@ function App() {
       case 'roles':
          return <RoleManagement />;
       case 'onboarding':
-         return <OnboardingHub candidates={candidates} />;
+         return <OnboardingHub candidates={candidates} employees={employees} onAddEmployee={handleAddEmployee} />;
       default:
         return <Dashboard role={currentRole} />;
     }

@@ -3,20 +3,26 @@ import React, { useState } from 'react';
 import { MOCK_EMPLOYEES } from '../constants';
 import { Employee, OnboardingPlan, OnboardingTask, Candidate, CandidateStage } from '../types';
 import { generateOnboardingPlan } from '../services/geminiService';
-import { UserPlus, Sparkles, CheckCircle, Circle, Mail, Send, ChevronDown, ChevronRight, Loader2, RefreshCw, X, Plus, UserCheck } from 'lucide-react';
+import { UserPlus, Sparkles, CheckCircle, Circle, Mail, Send, ChevronDown, ChevronRight, Loader2, RefreshCw, X, Plus, UserCheck, Briefcase } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
 interface OnboardingHubProps {
   candidates?: Candidate[];
+  employees?: Employee[];
+  onAddEmployee?: (emp: Employee) => void;
 }
 
-const OnboardingHub: React.FC<OnboardingHubProps> = ({ candidates = [] }) => {
+const OnboardingHub: React.FC<OnboardingHubProps> = ({ candidates = [], employees = [], onAddEmployee }) => {
   const { showToast } = useToast();
   
   // State
   const [newHires, setNewHires] = useState<Employee[]>(
-    MOCK_EMPLOYEES.filter(e => ['Active', 'Onboarding'].includes(e.status)).slice(0, 4)
+    // Initialize with a few mock employees who are in onboarding status if no props passed or empty
+    employees.filter(e => e.status === 'Onboarding').length > 0 
+      ? employees.filter(e => e.status === 'Onboarding') 
+      : MOCK_EMPLOYEES.filter(e => ['Active', 'Onboarding'].includes(e.status)).slice(0, 4)
   );
+  
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [plan, setPlan] = useState<OnboardingPlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,15 +31,18 @@ const OnboardingHub: React.FC<OnboardingHubProps> = ({ candidates = [] }) => {
 
   // Manual Entry State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [entryMode, setEntryMode] = useState<'candidate' | 'manual'>('candidate');
   const [manualEntry, setManualEntry] = useState({ name: '', role: '', department: '' });
-  const [linkedCandidateId, setLinkedCandidateId] = useState('');
+  const [linkedId, setLinkedId] = useState('');
+  const [buddyId, setBuddyId] = useState('');
+  const [createEmployeeRecord, setCreateEmployeeRecord] = useState(true);
 
   // Filter candidates who are in Offer stage
   const offeredCandidates = candidates.filter(c => c.stage === CandidateStage.OFFER);
 
   const handleSelectEmployee = (emp: Employee) => {
     setSelectedEmployee(emp);
-    setPlan(null); // Reset plan when switching employees (in a real app, fetch existing plan)
+    setPlan(null); // Reset plan when switching
     setExpandedPhases({});
   };
 
@@ -82,47 +91,65 @@ const OnboardingHub: React.FC<OnboardingHubProps> = ({ candidates = [] }) => {
     }
   };
 
-  const handleCandidateSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const cId = e.target.value;
-    setLinkedCandidateId(cId);
-    if (cId) {
-      const candidate = offeredCandidates.find(c => c.id === cId);
-      if (candidate) {
-        setManualEntry({
-          name: candidate.name,
-          role: candidate.role,
-          department: manualEntry.department // Keep department if already entered
-        });
-      }
-    } else {
-      setManualEntry({ name: '', role: '', department: '' });
+  const handleSourceSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    setLinkedId(id);
+    
+    if (!id) {
+        setManualEntry({ name: '', role: '', department: '' });
+        return;
+    }
+
+    if (entryMode === 'candidate') {
+        const candidate = offeredCandidates.find(c => c.id === id);
+        if (candidate) {
+            setManualEntry({
+                name: candidate.name,
+                role: candidate.role,
+                department: manualEntry.department || 'Engineering' // Default or guess
+            });
+        }
     }
   };
 
-  const handleAddManualEntry = () => {
+  const handleAddEntry = () => {
     if (!manualEntry.name || !manualEntry.role) return;
     
-    const newEmp: Employee = {
-        id: `e_man_${Date.now()}`,
-        name: manualEntry.name,
-        role: manualEntry.role,
-        department: manualEntry.department || 'General',
-        email: '', 
-        status: 'Onboarding',
-        joinDate: new Date().toISOString().split('T')[0],
-        salary: 0, 
-        currency: 'USD', 
-        location: 'Remote', 
-        shiftId: 'sh1'
-    };
+    // Create new
+    const newEmp = createNewEmployeeObj();
+    
+    // If "Create Employee Record" is checked and function is provided
+    if (createEmployeeRecord && onAddEmployee) {
+        onAddEmployee(newEmp);
+    }
 
     setNewHires(prev => [newEmp, ...prev]);
     setIsAddModalOpen(false);
+    
+    // Reset Form
     setManualEntry({ name: '', role: '', department: '' });
-    setLinkedCandidateId('');
+    setLinkedId('');
+    setBuddyId('');
+    setEntryMode('candidate');
+    
     handleSelectEmployee(newEmp); // Auto-select
-    showToast('Employee created and added to onboarding', 'success');
+    showToast('New hire created and added to onboarding', 'success');
   };
+
+  const createNewEmployeeObj = (): Employee => ({
+    id: `e_new_${Date.now()}`,
+    name: manualEntry.name,
+    role: manualEntry.role,
+    department: manualEntry.department || 'General',
+    email: '', 
+    status: 'Onboarding',
+    joinDate: new Date().toISOString().split('T')[0],
+    salary: 0, 
+    currency: 'USD', 
+    location: 'Remote', 
+    shiftId: 'sh1',
+    customAttributes: buddyId ? { 'Onboarding Buddy': employees.find(e => e.id === buddyId)?.name || '' } : undefined
+  });
 
   const toggleTask = (phaseIndex: number, taskIndex: number) => {
     if (!plan) return;
@@ -151,29 +178,35 @@ const OnboardingHub: React.FC<OnboardingHubProps> = ({ candidates = [] }) => {
       <div className="w-1/3 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
         <div className="p-4 border-b border-slate-100 bg-slate-50">
           <h2 className="font-bold text-slate-800 flex items-center gap-2">
-            <UserPlus size={18} /> New Hires
+            <UserPlus size={18} /> Onboarding List
           </h2>
           <p className="text-xs text-slate-500 mt-1">Select an employee to manage onboarding.</p>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {newHires.map(emp => (
-            <div 
-              key={emp.id}
-              onClick={() => handleSelectEmployee(emp)}
-              className={`p-4 border-b border-slate-50 cursor-pointer transition-all hover:bg-slate-50 ${selectedEmployee?.id === emp.id ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'}`}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-bold text-slate-900">{emp.name}</h3>
-                  <p className="text-xs text-slate-500">{emp.role}</p>
-                  <p className="text-xs text-slate-400 mt-1">{emp.department}</p>
+          {newHires.length === 0 ? (
+             <div className="p-8 text-center text-slate-400 text-sm">
+                No active onboarding found.
+             </div>
+          ) : (
+             newHires.map(emp => (
+                <div 
+                  key={emp.id}
+                  onClick={() => handleSelectEmployee(emp)}
+                  className={`p-4 border-b border-slate-50 cursor-pointer transition-all hover:bg-slate-50 ${selectedEmployee?.id === emp.id ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'}`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-slate-900">{emp.name}</h3>
+                      <p className="text-xs text-slate-500">{emp.role}</p>
+                      <p className="text-xs text-slate-400 mt-1">{emp.department}</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
+                      {emp.name.charAt(0)}
+                    </div>
+                  </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
-                  {emp.name.charAt(0)}
-                </div>
-              </div>
-            </div>
-          ))}
+             ))
+          )}
         </div>
         <div className="p-4 border-t border-slate-100">
            <button 
@@ -329,32 +362,56 @@ const OnboardingHub: React.FC<OnboardingHubProps> = ({ candidates = [] }) => {
       {/* Manual Entry Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-           <div className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+           <div className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 flex flex-col max-h-[90vh]">
               <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                  <h3 className="font-bold text-slate-800">Add to Onboarding</h3>
                  <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
               </div>
-              <div className="p-6 space-y-4">
-                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-2">
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-2">
-                       <UserCheck size={14} /> Link Recruitment Candidate
-                    </label>
-                    <select 
-                       className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
-                       onChange={handleCandidateSelect}
-                       value={linkedCandidateId}
-                    >
-                       <option value="">-- Select Offered Candidate --</option>
-                       {offeredCandidates.map(c => (
-                          <option key={c.id} value={c.id}>{c.name} - {c.role}</option>
-                       ))}
-                    </select>
-                    <p className="text-[10px] text-slate-400 mt-1">
-                       {offeredCandidates.length > 0 
-                          ? `${offeredCandidates.length} candidates in 'Offer' stage available.` 
-                          : 'No candidates currently in Offer stage.'}
-                    </p>
-                 </div>
+              
+              {/* Tab Switcher */}
+              <div className="flex border-b border-slate-200">
+                 <button 
+                    onClick={() => { setEntryMode('candidate'); setLinkedId(''); setManualEntry({ name: '', role: '', department: '' }); }}
+                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${entryMode === 'candidate' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
+                 >
+                    <Briefcase size={16} /> Recruitment
+                 </button>
+                 <button 
+                    onClick={() => { setEntryMode('manual'); setLinkedId(''); setManualEntry({ name: '', role: '', department: '' }); }}
+                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${entryMode === 'manual' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
+                 >
+                    <Plus size={16} /> Manual
+                 </button>
+              </div>
+
+              <div className="p-6 space-y-4 overflow-y-auto">
+                 {/* Selection Logic */}
+                 {entryMode === 'candidate' && (
+                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-2">
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-2">
+                           <UserCheck size={14} /> Select Offered Candidate
+                        </label>
+                        <select 
+                           className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm mb-2"
+                           onChange={handleSourceSelect}
+                           value={linkedId}
+                        >
+                           <option value="">-- Select Candidate --</option>
+                           {offeredCandidates.map(c => (
+                              <option key={c.id} value={c.id}>{c.name} - {c.role}</option>
+                           ))}
+                        </select>
+                        <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                           <input 
+                              type="checkbox" 
+                              checked={createEmployeeRecord}
+                              onChange={(e) => setCreateEmployeeRecord(e.target.checked)}
+                              className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                           />
+                           Create Employee Record (Add to Directory)
+                        </label>
+                    </div>
+                 )}
 
                  <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Full Name</label>
@@ -363,7 +420,7 @@ const OnboardingHub: React.FC<OnboardingHubProps> = ({ candidates = [] }) => {
                        onChange={(e) => setManualEntry({...manualEntry, name: e.target.value})}
                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
                        placeholder="e.g. Michael Chen"
-                       readOnly={!!linkedCandidateId}
+                       readOnly={!!linkedId && entryMode !== 'manual'}
                     />
                  </div>
                  <div>
@@ -373,7 +430,7 @@ const OnboardingHub: React.FC<OnboardingHubProps> = ({ candidates = [] }) => {
                        onChange={(e) => setManualEntry({...manualEntry, role: e.target.value})}
                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
                        placeholder="e.g. Senior Data Analyst"
-                       readOnly={!!linkedCandidateId}
+                       readOnly={!!linkedId && entryMode !== 'manual'}
                     />
                  </div>
                  <div>
@@ -385,15 +442,31 @@ const OnboardingHub: React.FC<OnboardingHubProps> = ({ candidates = [] }) => {
                        placeholder="e.g. Engineering"
                     />
                  </div>
+
+                 {/* Buddy Selection */}
+                 <div className="pt-2 border-t border-slate-100">
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Assign Onboarding Buddy</label>
+                    <select 
+                       className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                       onChange={(e) => setBuddyId(e.target.value)}
+                       value={buddyId}
+                    >
+                       <option value="">-- No Buddy Assigned --</option>
+                       {employees.map(e => (
+                          <option key={e.id} value={e.id}>{e.name} ({e.role})</option>
+                       ))}
+                    </select>
+                 </div>
               </div>
+
               <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
                  <button onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 text-slate-600 hover:text-slate-800 text-sm font-medium">Cancel</button>
                  <button 
-                    onClick={handleAddManualEntry}
+                    onClick={handleAddEntry}
                     disabled={!manualEntry.name || !manualEntry.role}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium disabled:opacity-50"
                  >
-                    Create Employee & Plan
+                    {entryMode === 'candidate' ? 'Hire & Onboard' : 'Start Onboarding'}
                  </button>
               </div>
            </div>
