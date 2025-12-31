@@ -1,40 +1,112 @@
 
 import React, { useState } from 'react';
-import { Mail, Lock, ArrowRight, User, Building, Shield, ChevronLeft } from 'lucide-react';
+import { Mail, Lock, ArrowRight, User, Building, Shield, ChevronLeft, KeyRound, Check, Loader2, UserPlus, Briefcase } from 'lucide-react';
 import { UserProfile, Role } from '../types';
+import { useToast } from '../context/ToastContext';
 
 interface SignupProps {
   onSignup: (user: UserProfile) => void;
   onSwitchToLogin: () => void;
 }
 
+type SignupMode = 'register_org' | 'add_user';
+
 const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    companyName: '',
-    role: Role.COMPANY_ADMIN
-  });
+  const { showToast } = useToast();
+  const [mode, setMode] = useState<SignupMode>('register_org');
   const [loading, setLoading] = useState(false);
 
-  const handleSignup = (e: React.FormEvent) => {
+  // Register Org State
+  const [orgData, setOrgData] = useState({
+    fullName: '',
+    companyName: '',
+    email: '',
+    password: ''
+  });
+
+  // Add User State
+  const [userData, setUserData] = useState({
+    adminEmail: '',
+    adminPassword: '',
+    newUserName: '',
+    newUserEmail: '',
+    newUserPassword: '',
+    newUserRole: Role.EMPLOYEE // Default
+  });
+
+  // OTP State
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+
+  const handleSendOtp = () => {
+    if (!userData.adminEmail || !userData.adminPassword) {
+        showToast("Admin credentials are required to authorize this action.", 'error');
+        return;
+    }
+    if (!userData.newUserEmail) {
+        showToast("Please enter the new user's email.", 'error');
+        return;
+    }
+
+    setSendingOtp(true);
+    // Simulate API delay and Auth check
+    setTimeout(() => {
+        setSendingOtp(false);
+        setOtpSent(true);
+        showToast(`Verification code sent to ${userData.newUserEmail}. (Hint: 123456)`, 'success');
+    }, 1500);
+  };
+
+  const handleRegisterOrg = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    // Simulate API call
     setTimeout(() => {
       const user: UserProfile = {
         id: `u${Date.now()}`,
-        name: formData.fullName,
-        email: formData.email,
-        role: formData.role,
-        companyName: formData.companyName,
+        name: orgData.fullName,
+        email: orgData.email,
+        role: Role.COMPANY_ADMIN,
+        companyName: orgData.companyName,
         avatarUrl: undefined
       };
       
       onSignup(user);
       setLoading(false);
+      showToast("Organization registered successfully!", 'success');
+    }, 1500);
+  };
+
+  const handleAddUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!otp) {
+        showToast("Please enter the verification code.", 'error');
+        return;
+    }
+    if (otp !== '123456') {
+        showToast("Invalid verification code.", 'error');
+        return;
+    }
+
+    setLoading(true);
+    
+    setTimeout(() => {
+      // In a real app, this would create the user in the backend. 
+      // For this demo, we log them in as the new user to show it worked.
+      const user: UserProfile = {
+        id: `u${Date.now()}`,
+        name: userData.newUserName,
+        email: userData.newUserEmail,
+        role: userData.newUserRole,
+        companyName: 'TalentFlow Demo Corp', // Mock linked company
+        avatarUrl: undefined
+      };
+      
+      onSignup(user);
+      setLoading(false);
+      showToast(`${userData.newUserRole} account created successfully!`, 'success');
     }, 1500);
   };
 
@@ -51,13 +123,19 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
                <button onClick={onSwitchToLogin} className="flex items-center gap-2 text-indigo-300 hover:text-white transition-colors mb-8 text-sm font-medium">
                   <ChevronLeft size={16} /> Back to Login
                </button>
-               <h1 className="text-4xl font-bold text-white mb-4">Start your<br/>journey.</h1>
-               <p className="text-slate-400">Join thousands of companies using TalentFlow AI to optimize their workforce.</p>
+               <h1 className="text-4xl font-bold text-white mb-4">
+                  {mode === 'register_org' ? "Build your\ndream team." : "Grow your\nworkforce."}
+               </h1>
+               <p className="text-slate-400">
+                  {mode === 'register_org' 
+                    ? "Join thousands of companies using TalentFlow AI to optimize their HR operations."
+                    : "Securely add new members to your organization with role-based access control."}
+               </p>
             </div>
 
             <div className="relative z-10 mt-auto">
                <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/10">
-                  <p className="text-indigo-100 italic mb-4">"TalentFlow has completely transformed how we manage our hiring pipeline. The AI features are a game changer."</p>
+                  <p className="text-indigo-100 italic mb-4">"The most intuitive platform for scaling teams securely."</p>
                   <div className="flex items-center gap-3">
                      <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold">JD</div>
                      <div>
@@ -70,116 +148,222 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
          </div>
 
          {/* Right Side (Form) */}
-         <div className="w-full md:w-7/12 p-8 md:p-16 bg-white flex flex-col justify-center">
-            <div className="max-w-md mx-auto w-full">
-               <div className="mb-8">
-                  <h2 className="text-3xl font-bold text-slate-900 mb-2">Create Account</h2>
-                  <p className="text-slate-500">Get started with your free 14-day trial.</p>
+         <div className="w-full md:w-7/12 p-8 md:p-12 bg-white flex flex-col">
+            <div className="max-w-md mx-auto w-full flex-1 flex flex-col">
+               
+               {/* Mode Tabs */}
+               <div className="flex bg-slate-100 p-1 rounded-xl mb-8">
+                  <button 
+                    onClick={() => setMode('register_org')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all ${mode === 'register_org' ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                     <Building size={16} /> New Company
+                  </button>
+                  <button 
+                    onClick={() => setMode('add_user')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all ${mode === 'add_user' ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                     <UserPlus size={16} /> Add Team Member
+                  </button>
                </div>
 
-               <form onSubmit={handleSignup} className="space-y-5">
-                  <div className="grid grid-cols-2 gap-5">
-                      <div>
-                         <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
-                         <div className="relative group">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                               <User className="h-4 w-4 text-slate-400" />
-                            </div>
-                            <input 
-                               type="text" 
-                               required
-                               value={formData.fullName}
-                               onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                               className="block w-full pl-10 pr-3 h-11 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                               placeholder="Jane Doe"
-                            />
-                         </div>
-                      </div>
-                      <div>
-                         <label className="block text-sm font-semibold text-slate-700 mb-2">Company</label>
-                         <div className="relative group">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                               <Building className="h-4 w-4 text-slate-400" />
-                            </div>
-                            <input 
-                               type="text" 
-                               required
-                               value={formData.companyName}
-                               onChange={(e) => setFormData({...formData, companyName: e.target.value})}
-                               className="block w-full pl-10 pr-3 h-11 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                               placeholder="Acme Inc."
-                            />
-                         </div>
-                      </div>
-                  </div>
+               <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-slate-900 mb-1">
+                     {mode === 'register_org' ? "Register Organization" : "Create User Account"}
+                  </h2>
+                  <p className="text-slate-500 text-sm">
+                     {mode === 'register_org' 
+                        ? "Create a new workspace for your company." 
+                        : "Authorize as Admin to add a new user."}
+                  </p>
+               </div>
 
-                  <div>
-                     <label className="block text-sm font-semibold text-slate-700 mb-2">Work Email</label>
-                     <div className="relative group">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                           <Mail className="h-4 w-4 text-slate-400" />
+               {mode === 'register_org' ? (
+                  /* REGISTER ORG FORM */
+                  <form onSubmit={handleRegisterOrg} className="space-y-4">
+                     <div className="grid grid-cols-2 gap-4">
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Full Name</label>
+                           <input 
+                              type="text" 
+                              required
+                              value={orgData.fullName}
+                              onChange={(e) => setOrgData({...orgData, fullName: e.target.value})}
+                              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                              placeholder="John Doe"
+                           />
                         </div>
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Company Name</label>
+                           <input 
+                              type="text" 
+                              required
+                              value={orgData.companyName}
+                              onChange={(e) => setOrgData({...orgData, companyName: e.target.value})}
+                              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                              placeholder="Acme Inc."
+                           />
+                        </div>
+                     </div>
+
+                     <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Work Email</label>
                         <input 
                            type="email" 
                            required
-                           value={formData.email}
-                           onChange={(e) => setFormData({...formData, email: e.target.value})}
-                           className="block w-full pl-10 pr-3 h-11 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                           placeholder="name@company.com"
+                           value={orgData.email}
+                           onChange={(e) => setOrgData({...orgData, email: e.target.value})}
+                           className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                           placeholder="admin@company.com"
                         />
                      </div>
-                  </div>
 
-                  <div>
-                     <label className="block text-sm font-semibold text-slate-700 mb-2">Password</label>
-                     <div className="relative group">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                           <Lock className="h-4 w-4 text-slate-400" />
-                        </div>
+                     <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Password</label>
                         <input 
                            type="password" 
                            required
-                           value={formData.password}
-                           onChange={(e) => setFormData({...formData, password: e.target.value})}
-                           className="block w-full pl-10 pr-3 h-11 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                           placeholder="Create a password"
+                           value={orgData.password}
+                           onChange={(e) => setOrgData({...orgData, password: e.target.value})}
+                           className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                           placeholder="Create password"
                         />
                      </div>
-                  </div>
 
-                  <div>
-                     <label className="block text-sm font-semibold text-slate-700 mb-2">I am a...</label>
-                     <div className="relative group">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                           <Shield className="h-4 w-4 text-slate-400" />
-                        </div>
-                        <select 
-                           value={formData.role}
-                           onChange={(e) => setFormData({...formData, role: e.target.value as Role})}
-                           className="block w-full pl-10 pr-3 h-11 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none"
+                     <div className="pt-2">
+                        <button 
+                           type="submit" 
+                           disabled={loading}
+                           className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2"
                         >
-                           {Object.values(Role).map(role => (
-                              <option key={role} value={role}>{role}</option>
-                           ))}
-                        </select>
-                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                           <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                           </svg>
+                           {loading ? <Loader2 className="animate-spin" size={18} /> : <>Create Workspace <ArrowRight size={18} /></>}
+                        </button>
+                     </div>
+                  </form>
+               ) : (
+                  /* ADD USER FORM */
+                  <form onSubmit={handleAddUser} className="space-y-5">
+                     
+                     {/* Admin Auth Section */}
+                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                           <KeyRound size={14} /> Admin Authorization
+                        </h3>
+                        <div className="space-y-3">
+                           <input 
+                              type="email" 
+                              required
+                              value={userData.adminEmail}
+                              onChange={(e) => setUserData({...userData, adminEmail: e.target.value})}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white"
+                              placeholder="Admin Email"
+                           />
+                           <input 
+                              type="password" 
+                              required
+                              value={userData.adminPassword}
+                              onChange={(e) => setUserData({...userData, adminPassword: e.target.value})}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white"
+                              placeholder="Admin Password"
+                           />
                         </div>
                      </div>
-                  </div>
 
-                  <button 
-                     type="submit" 
-                     disabled={loading}
-                     className="w-full h-11 mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-200 transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
-                  >
-                     {loading ? 'Creating account...' : <>Create Account <ArrowRight size={18} /></>}
-                  </button>
-               </form>
+                     {/* New User Details */}
+                     <div className="grid grid-cols-2 gap-4">
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1">New User Name</label>
+                           <input 
+                              type="text" 
+                              required
+                              value={userData.newUserName}
+                              onChange={(e) => setUserData({...userData, newUserName: e.target.value})}
+                              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                              placeholder="Jane Doe"
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Assign Role</label>
+                           <select 
+                              value={userData.newUserRole}
+                              onChange={(e) => setUserData({...userData, newUserRole: e.target.value as Role})}
+                              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                           >
+                              {Object.values(Role).filter(r => r !== Role.COMPANY_ADMIN).map(role => (
+                                 <option key={role} value={role}>{role}</option>
+                              ))}
+                           </select>
+                        </div>
+                     </div>
 
-               <div className="mt-8 text-center border-t border-slate-100 pt-6">
+                     <div className="grid grid-cols-2 gap-4">
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1">New User Email</label>
+                           <input 
+                              type="email" 
+                              required
+                              value={userData.newUserEmail}
+                              onChange={(e) => setUserData({...userData, newUserEmail: e.target.value})}
+                              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                              placeholder="user@company.com"
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Create Password</label>
+                           <input 
+                              type="password" 
+                              required
+                              value={userData.newUserPassword}
+                              onChange={(e) => setUserData({...userData, newUserPassword: e.target.value})}
+                              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                              placeholder="••••••••"
+                           />
+                        </div>
+                     </div>
+
+                     {/* OTP Verification */}
+                     <div className="flex gap-2 items-end">
+                        <div className="flex-1">
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Verification Code</label>
+                           <div className="relative">
+                              <input 
+                                 type="text" 
+                                 value={otp} 
+                                 onChange={(e) => setOtp(e.target.value)}
+                                 disabled={!otpSent}
+                                 className="w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-slate-50 disabled:text-slate-400"
+                                 placeholder={otpSent ? "123456" : "Wait for OTP"}
+                              />
+                              <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                           </div>
+                        </div>
+                        <button 
+                           type="button"
+                           onClick={handleSendOtp}
+                           disabled={sendingOtp || otpSent || !userData.newUserEmail}
+                           className="h-[42px] px-4 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-900 disabled:opacity-50 whitespace-nowrap"
+                        >
+                           {sendingOtp ? <Loader2 className="animate-spin" size={14} /> : otpSent ? "Sent" : "Send OTP"}
+                        </button>
+                     </div>
+
+                     <button 
+                        type="submit" 
+                        disabled={loading || !otpSent}
+                        className="w-full h-11 mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                     >
+                        {loading ? (
+                           <>
+                               <Loader2 className="animate-spin" size={18} /> Creating...
+                           </>
+                        ) : (
+                           <>Create User Account <UserPlus size={18} /></>
+                        )}
+                     </button>
+                  </form>
+               )}
+
+               <div className="mt-auto pt-6 text-center border-t border-slate-100 mt-6">
                   <p className="text-slate-500 text-sm">
                      Already have an account? 
                      <button onClick={onSwitchToLogin} className="ml-1 text-indigo-600 font-bold hover:text-indigo-700">Sign in</button>

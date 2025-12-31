@@ -184,11 +184,9 @@ function App() {
   };
 
   const renderContent = () => {
-    if (!user) return null;
-
     switch (currentView) {
       case 'dashboard':
-        return <Dashboard role={user.role} />;
+        return <Dashboard role={user!.role} />;
       case 'recruitment':
         return (
           <RecruitmentBoard 
@@ -208,7 +206,7 @@ function App() {
       case 'hrops':
         return (
           <HROps 
-            role={user.role} 
+            role={user!.role} 
             onSendMessage={handleSendMessage} 
             payrollRecords={payrollRecords}
             onProcessPayroll={handleProcessPayroll}
@@ -251,14 +249,14 @@ function App() {
       case 'messages':
         return (
           <MessageBox 
-            role={user.role} 
+            role={user!.role} 
             messages={messages} 
             onSendMessage={handleSendMessage} 
             onMarkAsRead={handleMarkAsRead} 
           />
         );
       case 'settings':
-        return <Settings role={user.role} />;
+        return <Settings role={user!.role} />;
       case 'policies':
          return <PolicyManagement />;
       case 'roles':
@@ -266,54 +264,54 @@ function App() {
       case 'onboarding':
          return <OnboardingHub candidates={candidates} employees={employees} onAddEmployee={handleAddEmployee} />;
       default:
-        return <Dashboard role={user.role} />;
+        return <Dashboard role={user!.role} />;
     }
   };
 
-  // Main Render
-  if (!user) {
-    if (authView === 'login') {
-      return <Login onLogin={handleLogin} onSwitchToSignup={() => setAuthView('signup')} />;
-    } else {
-      return <Signup onSignup={handleLogin} onSwitchToLogin={() => setAuthView('login')} />;
-    }
-  }
-
   // Determine Unread Count for Badge
-  // For demo, assume logged in user is recipient 'admin' if role is admin, else specific ID
-  const currentUserId = (user.role === Role.HR_ADMIN || user.role === Role.COMPANY_ADMIN) ? 'admin' : 'e1';
+  const currentUserId = (user?.role === Role.HR_ADMIN || user?.role === Role.COMPANY_ADMIN) ? 'admin' : 'e1';
   const unreadMessagesCount = messages.filter(m => m.recipientId === currentUserId && !m.isRead).length;
 
   return (
     <ToastProvider>
-      <Layout 
-        user={user}
-        onLogout={handleLogout}
-        currentView={currentView}
-        onNavigate={setCurrentView}
-        unreadMessagesCount={unreadMessagesCount}
-      >
-        <div className="animate-in fade-in duration-300">
-          {renderContent()}
-        </div>
+      {/* Auth Screen Logic */}
+      {!user ? (
+        authView === 'login' ? (
+          <Login onLogin={handleLogin} onSwitchToSignup={() => setAuthView('signup')} />
+        ) : (
+          <Signup onSignup={handleLogin} onSwitchToLogin={() => setAuthView('login')} />
+        )
+      ) : (
+        /* Authenticated App Logic */
+        <Layout 
+          user={user}
+          onLogout={handleLogout}
+          currentView={currentView}
+          onNavigate={setCurrentView}
+          unreadMessagesCount={unreadMessagesCount}
+        >
+          <div className="animate-in fade-in duration-300">
+            {renderContent()}
+          </div>
 
-        {selectedCandidate && (
-          <CandidateModal 
-            candidate={selectedCandidate} 
-            onClose={() => setSelectedCandidate(null)}
-            onUpdate={handleUpdateCandidate}
-            onAudit={addAuditLog}
-          />
-        )}
+          {selectedCandidate && (
+            <CandidateModal 
+              candidate={selectedCandidate} 
+              onClose={() => setSelectedCandidate(null)}
+              onUpdate={handleUpdateCandidate}
+              onAudit={addAuditLog}
+            />
+          )}
 
-        {isUploadModalOpen && (
-          <ResumeUpload 
-            onClose={() => setIsUploadModalOpen(false)}
-            onAddCandidate={handleAddCandidate}
-            jobs={jobs}
-          />
-        )}
-      </Layout>
+          {isUploadModalOpen && (
+            <ResumeUpload 
+              onClose={() => setIsUploadModalOpen(false)}
+              onAddCandidate={handleAddCandidate}
+              jobs={jobs}
+            />
+          )}
+        </Layout>
+      )}
     </ToastProvider>
   );
 }
