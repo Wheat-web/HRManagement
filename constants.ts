@@ -206,7 +206,7 @@ export const MOCK_LETTER_TEMPLATES: LetterTemplate[] = [
     id: 't1',
     title: 'Employment Verification',
     subject: 'Employment Verification - {{name}}',
-    bodyTemplate: 'To Whom It May Concern,\n\nThis letter confirms that {{name}} is currently employed at TalentFlow AI as a {{role}} since {{joinDate}}. They are in good standing.\n\nPlease contact HR for further verification.\n\nSincerely,\nHR Department'
+    bodyTemplate: 'To Whom It May Concern,\n\nThis letter confirms that {{name}} is currently employed at PeopleCore as a {{role}} since {{joinDate}}. They are in good standing.\n\nPlease contact HR for further verification.\n\nSincerely,\nHR Department'
   },
   {
     id: 't2',
@@ -223,8 +223,8 @@ export const MOCK_LETTER_TEMPLATES: LetterTemplate[] = [
   {
     id: 't4',
     title: 'Job Offer Letter',
-    subject: 'Job Offer - {{role}} at TalentFlow AI',
-    bodyTemplate: 'Dear {{name}},\n\nWe are pleased to offer you the position of {{role}} at TalentFlow AI. Your start date is [Start Date].\n\nYour annual starting salary will be {{currency}} {{salary}}. We look forward to having you on the team!\n\nSincerely,\nHiring Manager'
+    subject: 'Job Offer - {{role}} at PeopleCore',
+    bodyTemplate: 'Dear {{name}},\n\nWe are pleased to offer you the position of {{role}} at PeopleCore. Your start date is [Start Date].\n\nYour annual starting salary will be {{currency}} {{salary}}. We look forward to having you on the team!\n\nSincerely,\nHiring Manager'
   },
   {
     id: 't5',

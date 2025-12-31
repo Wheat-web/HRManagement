@@ -26,7 +26,7 @@ const MessageBox: React.FC<MessageBoxProps> = ({ role, messages, onSendMessage, 
 
   // Integration State
   const [integrations, setIntegrations] = useState<EmailIntegration[]>([
-    { provider: 'SMTP', email: 'hr@talentflow.ai', status: 'Connected', lastSync: 'Just now' }
+    { provider: 'SMTP', email: 'hr@peoplecore.ai', status: 'Connected', lastSync: 'Just now' }
   ]);
   const [showIntegrations, setShowIntegrations] = useState(false);
 
@@ -508,7 +508,7 @@ const MessageBox: React.FC<MessageBoxProps> = ({ role, messages, onSendMessage, 
                            </div>
                            <div>
                               <div className="font-bold text-slate-900">{selectedMessage.senderName}</div>
-                              <div className="text-xs text-slate-500">From: {selectedMessage.senderId === 'admin' ? 'hr@talentflow.ai' : 'user@example.com'}</div>
+                              <div className="text-xs text-slate-500">From: {selectedMessage.senderId === 'admin' ? 'hr@peoplecore.ai' : 'user@example.com'}</div>
                               <div className="text-xs text-slate-500">To: {selectedMessage.recipientName}</div>
                            </div>
                         </div>
@@ -523,7 +523,7 @@ const MessageBox: React.FC<MessageBoxProps> = ({ role, messages, onSendMessage, 
                      <div className={`prose prose-slate max-w-none text-sm leading-relaxed ${selectedMessage.type === 'Letter' ? 'font-serif text-slate-800' : 'font-sans text-slate-600'}`}>
                         {selectedMessage.type === 'Letter' && (
                            <div className="mb-8 text-center border-b-2 border-slate-800 pb-4">
-                              <h2 className="text-xl font-bold uppercase tracking-widest text-slate-900 m-0">TalentFlow AI</h2>
+                              <h2 className="text-xl font-bold uppercase tracking-widest text-slate-900 m-0">PeopleCore</h2>
                               <p className="text-xs text-slate-500 m-0 mt-1">Human Resources Department • New York, NY</p>
                            </div>
                         )}
@@ -538,7 +538,7 @@ const MessageBox: React.FC<MessageBoxProps> = ({ role, messages, onSendMessage, 
                                  {/* Signature Placeholder */}
                                  <div className="h-12 w-32 mb-2 font-script text-2xl text-slate-400 italic">Signed</div>
                                  <p className="font-bold text-slate-900">HR Administration</p>
-                                 <p className="text-xs text-slate-500">TalentFlow AI Inc.</p>
+                                 <p className="text-xs text-slate-500">PeopleCore Inc.</p>
                               </div>
                               <div className="w-24 h-24 border-4 border-slate-200 rounded-full flex items-center justify-center opacity-20 rotate-12">
                                  <span className="text-xs font-bold uppercase text-center">Official<br/>Seal</span>

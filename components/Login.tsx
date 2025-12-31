@@ -29,9 +29,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup }) => {
       const user: UserProfile = {
         id: 'u1',
         name: email.split('@')[0] || 'Demo User',
-        email: email || 'demo@talentflow.ai',
+        email: email || 'demo@peoplecore.ai',
         role: role,
-        companyName: 'TalentFlow Demo Corp',
+        companyName: 'PeopleCore Demo Corp',
         avatarUrl: undefined
       };
       
@@ -61,7 +61,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup }) => {
                  <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
                     <ShieldCheck size={28} className="text-white" />
                  </div>
-                 <span className="text-2xl font-bold tracking-tight">TalentFlow AI</span>
+                 <span className="text-2xl font-bold tracking-tight">PeopleCore</span>
               </div>
               
               <h1 className="text-4xl lg:text-5xl font-bold leading-tight mb-6">
@@ -89,7 +89,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup }) => {
            </div>
 
            <div className="relative z-10 mt-12 text-xs text-indigo-300">
-              © 2024 TalentFlow AI Inc. All rights reserved.
+              © 2024 PeopleCore Inc. All rights reserved.
            </div>
         </div>
 

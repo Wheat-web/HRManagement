@@ -98,7 +98,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, currentView, 
             <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center">
               <ShieldCheck className="text-white" size={20} />
             </div>
-            <span className="font-bold text-lg tracking-tight">TalentFlow AI</span>
+            <span className="font-bold text-lg tracking-tight">PeopleCore</span>
           </div>
         </div>
 

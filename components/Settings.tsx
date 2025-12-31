@@ -17,7 +17,7 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
   // Mock Form State
   const [profile, setProfile] = useState({
     name: 'Jane Doe',
-    email: isAdmin ? 'admin@talentflow.ai' : 'jane.doe@example.com',
+    email: isAdmin ? 'admin@peoplecore.ai' : 'jane.doe@example.com',
     role: role,
     bio: 'Experienced professional with a focus on HR operations and team management.'
   });
@@ -126,7 +126,7 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                      <label className="block text-sm font-medium text-slate-700 mb-1">Company Name</label>
-                     <input defaultValue="TalentFlow AI Inc." className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                     <input defaultValue="PeopleCore Inc." className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                   </div>
                   <div>
                      <label className="block text-sm font-medium text-slate-700 mb-1">Tax ID / EIN</label>

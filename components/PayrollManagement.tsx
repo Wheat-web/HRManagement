@@ -368,7 +368,7 @@ const PayrollManagement: React.FC<PayrollManagementProps> = ({
                      <p className="text-slate-400 text-sm mt-1">{selectedRecord.period}</p>
                   </div>
                   <div className="text-right">
-                     <h3 className="font-bold text-lg">TalentFlow AI Inc.</h3>
+                     <h3 className="font-bold text-lg">PeopleCore Inc.</h3>
                      <p className="text-xs text-slate-400">123 Business Park, NY</p>
                   </div>
                </div>

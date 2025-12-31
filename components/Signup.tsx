@@ -100,7 +100,7 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
         name: userData.newUserName,
         email: userData.newUserEmail,
         role: userData.newUserRole,
-        companyName: 'TalentFlow Demo Corp', // Mock linked company
+        companyName: 'PeopleCore Demo Corp', // Mock linked company
         avatarUrl: undefined
       };
       
@@ -128,7 +128,7 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
                </h1>
                <p className="text-slate-400">
                   {mode === 'register_org' 
-                    ? "Join thousands of companies using TalentFlow AI to optimize their HR operations."
+                    ? "Join thousands of companies using PeopleCore to optimize their HR operations."
                     : "Securely add new members to your organization with role-based access control."}
                </p>
             </div>
