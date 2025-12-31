@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Role } from '../types';
 import { User, Bell, Lock, Building, CreditCard, Users, Save, Check, Download } from 'lucide-react';
@@ -9,7 +10,7 @@ interface SettingsProps {
 
 const Settings: React.FC<SettingsProps> = ({ role }) => {
   const { showToast } = useToast();
-  const isAdmin = role === Role.ADMIN;
+  const isAdmin = role === Role.COMPANY_ADMIN || role === Role.HR_ADMIN;
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
 

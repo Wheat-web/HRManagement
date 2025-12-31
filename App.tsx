@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
+import Login from './components/Login';
+import Signup from './components/Signup';
 import RecruitmentBoard from './components/RecruitmentBoard';
 import CandidateModal from './components/CandidateModal';
 import ResumeUpload from './components/ResumeUpload';
@@ -21,16 +23,20 @@ import InterviewSchedule from './components/InterviewSchedule';
 import PolicyManagement from './components/PolicyManagement';
 import RoleManagement from './components/RoleManagement';
 import OnboardingHub from './components/OnboardingHub';
-import { MOCK_CANDIDATES, MOCK_AUDIT_LOGS, MOCK_DEPARTMENTS, MOCK_EMPLOYEES, MOCK_MESSAGES, MOCK_PAYROLL } from './constants';
-import { Candidate, Role, CandidateStage, AuditLog, Message, Employee, Department, PayrollRecord } from './types';
+import { MOCK_CANDIDATES, MOCK_AUDIT_LOGS, MOCK_DEPARTMENTS, MOCK_EMPLOYEES, MOCK_MESSAGES, MOCK_PAYROLL, MOCK_JOBS } from './constants';
+import { Candidate, Role, CandidateStage, AuditLog, Message, Employee, Department, PayrollRecord, JobOpening, UserProfile } from './types';
 import { ToastProvider } from './context/ToastContext';
 
 function App() {
-  const [currentRole, setCurrentRole] = useState<Role>(Role.ADMIN);
+  // Authentication State
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [authView, setAuthView] = useState<'login' | 'signup'>('login');
+
   const [currentView, setCurrentView] = useState('dashboard');
   
   // State for Recruitment
   const [candidates, setCandidates] = useState<Candidate[]>(MOCK_CANDIDATES);
+  const [jobs, setJobs] = useState<JobOpening[]>(MOCK_JOBS);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
@@ -47,12 +53,16 @@ function App() {
   // State for Messaging
   const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
 
-  // Reset view when role changes
-  useEffect(() => {
-    if (currentRole === Role.EMPLOYEE) {
-      setCurrentView('dashboard');
-    }
-  }, [currentRole]);
+  // Auth Handlers
+  const handleLogin = (loggedInUser: UserProfile) => {
+    setUser(loggedInUser);
+    setCurrentView('dashboard');
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setAuthView('login');
+  };
 
   const handleUpdateCandidate = (updated: Candidate) => {
     setCandidates(prev => prev.map(c => c.id === updated.id ? updated : c));
@@ -65,6 +75,11 @@ function App() {
     setCandidates(prev => [newCandidate, ...prev]);
     setIsUploadModalOpen(false);
     addAuditLog('Resume Upload', `Added new candidate: ${newCandidate.name}`, false);
+  };
+
+  const handleAddJob = (newJob: JobOpening) => {
+    setJobs(prev => [newJob, ...prev]);
+    addAuditLog('Job Creation', `Created new job opening: ${newJob.title}`, false);
   };
 
   const handleAddEmployee = (newEmployee: Employee) => {
@@ -106,7 +121,21 @@ function App() {
     if (eligibleEmployees.length === 0) return;
 
     const newRecords: PayrollRecord[] = eligibleEmployees.map(e => {
-        const monthlyBase = Math.round(e.salary / 12);
+        // Calculate monthly base based on frequency
+        let monthlyBase = 0;
+        if (e.paymentFrequency === 'Hourly') {
+            monthlyBase = Math.round(e.salary * 160); // Approx 160 hours/month
+        } else if (e.paymentFrequency === 'Daily') {
+            monthlyBase = Math.round(e.salary * 22); // Approx 22 days/month
+        } else if (e.paymentFrequency === 'Weekly') {
+            monthlyBase = Math.round(e.salary * 4.33); // Approx 4.33 weeks/month
+        } else if (e.paymentFrequency === 'Monthly') {
+            monthlyBase = e.salary;
+        } else {
+            // Annual
+            monthlyBase = Math.round(e.salary / 12);
+        }
+
         // Simple mock logic for deductions (e.g. 20% tax + benefits)
         const deductions = Math.round(monthlyBase * 0.22); 
         const bonus = 0; // Default bonus
@@ -135,8 +164,8 @@ function App() {
     const newLog: AuditLog = {
       id: `l${Date.now()}`,
       timestamp: new Date().toLocaleString(),
-      user: 'Current User', // In real app, from auth context
-      role: currentRole,
+      user: user?.name || 'System',
+      role: user?.role || Role.COMPANY_ADMIN,
       action,
       details,
       aiInvolved: true,
@@ -154,24 +183,24 @@ function App() {
     setMessages(prev => prev.map(m => m.id === messageId ? { ...m, isRead: true } : m));
   };
 
-  // Determine Unread Count for Badge
-  const currentUserId = currentRole === Role.ADMIN ? 'admin' : 'e1';
-  const unreadMessagesCount = messages.filter(m => m.recipientId === currentUserId && !m.isRead).length;
-
   const renderContent = () => {
+    if (!user) return null;
+
     switch (currentView) {
       case 'dashboard':
-        return <Dashboard role={currentRole} />;
+        return <Dashboard role={user.role} />;
       case 'recruitment':
         return (
           <RecruitmentBoard 
             candidates={candidates} 
+            jobs={jobs}
             onSelectCandidate={setSelectedCandidate}
             onUpdateStage={(c, stage) => {
               handleUpdateCandidate({ ...c, stage });
               addAuditLog('Stage Update', `Moved ${c.name} to ${stage}`, false);
             }}
             onUploadResume={() => setIsUploadModalOpen(true)}
+            onAddJob={handleAddJob}
           />
         );
       case 'schedule':
@@ -179,7 +208,7 @@ function App() {
       case 'hrops':
         return (
           <HROps 
-            role={currentRole} 
+            role={user.role} 
             onSendMessage={handleSendMessage} 
             payrollRecords={payrollRecords}
             onProcessPayroll={handleProcessPayroll}
@@ -222,14 +251,14 @@ function App() {
       case 'messages':
         return (
           <MessageBox 
-            role={currentRole} 
+            role={user.role} 
             messages={messages} 
             onSendMessage={handleSendMessage} 
             onMarkAsRead={handleMarkAsRead} 
           />
         );
       case 'settings':
-        return <Settings role={currentRole} />;
+        return <Settings role={user.role} />;
       case 'policies':
          return <PolicyManagement />;
       case 'roles':
@@ -237,15 +266,29 @@ function App() {
       case 'onboarding':
          return <OnboardingHub candidates={candidates} employees={employees} onAddEmployee={handleAddEmployee} />;
       default:
-        return <Dashboard role={currentRole} />;
+        return <Dashboard role={user.role} />;
     }
   };
+
+  // Main Render
+  if (!user) {
+    if (authView === 'login') {
+      return <Login onLogin={handleLogin} onSwitchToSignup={() => setAuthView('signup')} />;
+    } else {
+      return <Signup onSignup={handleLogin} onSwitchToLogin={() => setAuthView('login')} />;
+    }
+  }
+
+  // Determine Unread Count for Badge
+  // For demo, assume logged in user is recipient 'admin' if role is admin, else specific ID
+  const currentUserId = (user.role === Role.HR_ADMIN || user.role === Role.COMPANY_ADMIN) ? 'admin' : 'e1';
+  const unreadMessagesCount = messages.filter(m => m.recipientId === currentUserId && !m.isRead).length;
 
   return (
     <ToastProvider>
       <Layout 
-        currentRole={currentRole} 
-        onRoleChange={setCurrentRole}
+        user={user}
+        onLogout={handleLogout}
         currentView={currentView}
         onNavigate={setCurrentView}
         unreadMessagesCount={unreadMessagesCount}
@@ -267,6 +310,7 @@ function App() {
           <ResumeUpload 
             onClose={() => setIsUploadModalOpen(false)}
             onAddCandidate={handleAddCandidate}
+            jobs={jobs}
           />
         )}
       </Layout>

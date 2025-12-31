@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MOCK_EMPLOYEES, MOCK_LETTER_TEMPLATES, MOCK_CANDIDATES } from '../constants';
 import { Message, EmailIntegration, Role } from '../types';
@@ -14,7 +15,7 @@ interface MessageBoxProps {
 
 const MessageBox: React.FC<MessageBoxProps> = ({ role, messages, onSendMessage, onMarkAsRead }) => {
   const { showToast } = useToast();
-  const isAdmin = role === Role.ADMIN;
+  const isAdmin = role === Role.COMPANY_ADMIN || role === Role.HR_ADMIN;
   // Mock logged in user ID. If Admin, 'admin'. If Employee, 'e1' (Jane Doe)
   const currentUserId = isAdmin ? 'admin' : 'e1'; 
   const currentUserName = isAdmin ? 'HR Admin' : 'Jane Doe';

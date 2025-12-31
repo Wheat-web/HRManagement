@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Department, Employee, Candidate, CandidateStage } from '../types';
+import { Department, Employee, Candidate, CandidateStage, PaymentFrequency } from '../types';
 import { Building2, Users, Plus, MapPin, Mail, MoreHorizontal, User, Trash2, SlidersHorizontal, DownloadCloud } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
@@ -129,6 +129,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = ({
         status: formData.status || 'Active',
         joinDate: formData.joinDate || new Date().toISOString().split('T')[0],
         salary: Number(formData.salary) || 50000,
+        paymentFrequency: (formData.paymentFrequency as PaymentFrequency) || 'Annual',
         currency: formData.currency || 'USD',
         location: formData.location || 'Remote',
         shiftId: 'sh1', // Default to General Shift
@@ -380,7 +381,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = ({
                     </div>
 
                     <div className="col-span-2 border-t border-slate-100 mt-2 pt-4">
-                       <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Employment Details</h4>
+                       <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Employment & Salary</h4>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-700 mb-1">Status</label>
@@ -405,7 +406,7 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = ({
                        />
                     </div>
                     <div>
-                       <label className="block text-xs font-medium text-slate-700 mb-1">Annual Salary</label>
+                       <label className="block text-xs font-medium text-slate-700 mb-1">Salary Amount</label>
                        <input 
                           type="number"
                           value={formData.salary || ''}
@@ -414,6 +415,20 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = ({
                        />
                     </div>
                     <div>
+                       <label className="block text-xs font-medium text-slate-700 mb-1">Payment Frequency</label>
+                       <select 
+                          value={formData.paymentFrequency || 'Annual'}
+                          onChange={(e) => setFormData({...formData, paymentFrequency: e.target.value})}
+                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                       >
+                          <option value="Annual">Annual</option>
+                          <option value="Monthly">Monthly</option>
+                          <option value="Weekly">Weekly</option>
+                          <option value="Daily">Daily</option>
+                          <option value="Hourly">Hourly</option>
+                       </select>
+                    </div>
+                    <div className="col-span-2">
                        <label className="block text-xs font-medium text-slate-700 mb-1">Location</label>
                        <input 
                           type="text"

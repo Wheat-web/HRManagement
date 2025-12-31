@@ -1,6 +1,7 @@
 
 export enum Role {
-  ADMIN = 'HR Admin',
+  COMPANY_ADMIN = 'Company Admin',
+  HR_ADMIN = 'HR Admin',
   RECRUITER = 'Recruiter',
   MANAGER = 'Hiring Manager',
   EMPLOYEE = 'Employee'
@@ -14,10 +15,31 @@ export enum CandidateStage {
   REJECTED = 'Rejected'
 }
 
-export interface Candidate {
+export interface UserProfile {
   id: string;
   name: string;
-  role: string;
+  email: string;
+  role: Role;
+  companyName: string;
+  avatarUrl?: string;
+}
+
+export interface JobOpening {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  type: 'Full-time' | 'Contract' | 'Part-time' | 'Internship';
+  status: 'Open' | 'Closed' | 'Draft';
+  postedDate: string;
+  hiringManager?: string;
+}
+
+export interface Candidate {
+  id: string;
+  jobId?: string; // Link to specific job
+  name: string;
+  role: string; // Display role (usually matches job title)
   stage: CandidateStage;
   email: string;
   experience: number;
@@ -81,6 +103,8 @@ export interface Shift {
   color: string;
 }
 
+export type PaymentFrequency = 'Annual' | 'Monthly' | 'Weekly' | 'Daily' | 'Hourly';
+
 export interface Employee {
   id: string;
   name: string;
@@ -89,7 +113,8 @@ export interface Employee {
   email: string;
   status: 'Active' | 'On Leave' | 'Terminated' | 'Onboarding';
   joinDate: string;
-  salary: number;
+  salary: number; // This is now the rate based on paymentFrequency
+  paymentFrequency: PaymentFrequency; 
   currency: string;
   location: string;
   shiftId: string; // Link to Shift
@@ -138,10 +163,11 @@ export interface CompensationChange {
   id: string;
   employeeId: string;
   date: string;
-  type: 'Increment' | 'Bonus' | 'Correction';
-  amount: number; // For bonus
+  type: 'Structure Change' | 'Bonus' | 'Overtime' | 'Correction';
+  amount: number; // For bonus or OT total
   previousSalary?: number;
-  newSalary?: number; // For increment
+  newSalary?: number; // For structure change
+  newFrequency?: PaymentFrequency;
   reason: string;
   approvedBy: string;
 }

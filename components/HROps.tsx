@@ -15,7 +15,7 @@ interface HROpsProps {
 
 const HROps: React.FC<HROpsProps> = ({ role, onSendMessage, payrollRecords = MOCK_PAYROLL, onProcessPayroll }) => {
   const { showToast } = useToast();
-  const isAdmin = role === Role.ADMIN;
+  const isAdmin = role === Role.COMPANY_ADMIN || role === Role.HR_ADMIN;
   // Initialize default view based on Role
   const [activeView, setActiveView] = useState<'overview' | 'payroll' | 'communication' | 'attendance'>('overview');
   const [query, setQuery] = useState('');

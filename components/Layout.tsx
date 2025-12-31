@@ -24,12 +24,12 @@ import {
   UserPlus,
   CreditCard
 } from 'lucide-react';
-import { Role } from '../types';
+import { Role, UserProfile } from '../types';
 
 interface LayoutProps {
   children: React.ReactNode;
-  currentRole: Role;
-  onRoleChange: (role: Role) => void;
+  user: UserProfile;
+  onLogout: () => void;
   currentView: string;
   onNavigate: (view: string) => void;
   unreadMessagesCount?: number;
@@ -42,7 +42,7 @@ interface MenuItem {
   badge?: number;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, currentRole, onRoleChange, currentView, onNavigate, unreadMessagesCount = 0 }) => {
+const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, currentView, onNavigate, unreadMessagesCount = 0 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   const getMenuItems = (): MenuItem[] => {
@@ -50,7 +50,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentRole, onRoleChange, cu
       { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     ];
 
-    if (currentRole === Role.EMPLOYEE) {
+    if (user.role === Role.EMPLOYEE) {
       return [
         ...baseItems,
         { id: 'hrops', label: 'HR Portal', icon: <Briefcase size={20} /> },
@@ -64,14 +64,14 @@ const Layout: React.FC<LayoutProps> = ({ children, currentRole, onRoleChange, cu
       { id: 'schedule', label: 'Interviews', icon: <Briefcase size={20} /> },
     ];
 
-    if (currentRole === Role.ADMIN || currentRole === Role.MANAGER) {
+    if (user.role === Role.HR_ADMIN || user.role === Role.COMPANY_ADMIN || user.role === Role.MANAGER) {
       opsItems.push({ id: 'onboarding', label: 'Onboarding Hub', icon: <UserPlus size={20} /> });
       opsItems.push({ id: 'payroll', label: 'Payroll', icon: <CreditCard size={20} /> });
-      opsItems.push({ id: 'salary', label: 'Compensation', icon: <DollarSign size={20} /> });
+      opsItems.push({ id: 'salary', label: 'Salary Management', icon: <DollarSign size={20} /> });
       opsItems.push({ id: 'productivity', label: 'Productivity', icon: <TrendingUp size={20} /> });
     }
 
-    if (currentRole === Role.ADMIN) {
+    if (user.role === Role.HR_ADMIN || user.role === Role.COMPANY_ADMIN) {
       opsItems.push({ id: 'shifts', label: 'Shift Management', icon: <Clock size={20} /> });
       opsItems.push({ id: 'attendance', label: 'Attendance', icon: <CalendarCheck size={20} /> });
       opsItems.push({ id: 'messages', label: 'Official Mail', icon: <Mail size={20} />, badge: unreadMessagesCount });
@@ -92,8 +92,8 @@ const Layout: React.FC<LayoutProps> = ({ children, currentRole, onRoleChange, cu
   return (
     <div className="min-h-screen flex bg-slate-50 text-slate-900 font-sans">
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transform transition-transform duration-200 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 shadow-xl`}>
-        <div className="h-16 flex items-center px-6 border-b border-slate-800">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transform transition-transform duration-200 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 shadow-xl flex flex-col`}>
+        <div className="h-16 flex items-center px-6 border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center">
               <ShieldCheck className="text-white" size={20} />
@@ -102,7 +102,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentRole, onRoleChange, cu
           </div>
         </div>
 
-        <nav className="p-4 space-y-1 h-[calc(100vh-12rem)] overflow-y-auto custom-scrollbar">
+        <nav className="p-4 space-y-1 flex-1 overflow-y-auto custom-scrollbar">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -129,10 +129,10 @@ const Layout: React.FC<LayoutProps> = ({ children, currentRole, onRoleChange, cu
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 w-full p-4 border-t border-slate-800 bg-slate-900 z-10">
+        <div className="p-4 border-t border-slate-800 bg-slate-900 shrink-0">
            <button 
              onClick={() => { onNavigate('settings'); setIsMobileMenuOpen(false); }}
-             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-2 ${
+             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-4 ${
                 currentView === 'settings' 
                   ? 'bg-indigo-600 text-white' 
                   : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -141,28 +141,29 @@ const Layout: React.FC<LayoutProps> = ({ children, currentRole, onRoleChange, cu
               <Settings size={20} /> Settings
            </button>
 
-           <div className="mb-4">
-            <label className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-2 block">View As</label>
-            <select 
-              value={currentRole}
-              onChange={(e) => onRoleChange(e.target.value as Role)}
-              className="w-full bg-slate-800 border-none rounded text-sm text-slate-300 focus:ring-1 focus:ring-indigo-500"
-            >
-              {Object.values(Role).map((role) => (
-                <option key={role} value={role}>{role}</option>
-              ))}
-            </select>
+           <div className="flex items-center gap-3 px-2 py-2 bg-slate-800 rounded-lg mb-2">
+              <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-xs font-bold">
+                 {user.name.charAt(0)}
+              </div>
+              <div className="overflow-hidden">
+                 <p className="text-sm font-bold text-white truncate">{user.name}</p>
+                 <p className="text-xs text-slate-400 truncate">{user.role}</p>
+              </div>
            </div>
-           <button className="flex items-center gap-2 text-slate-400 hover:text-white text-sm w-full px-1">
+
+           <button 
+             onClick={onLogout}
+             className="flex items-center gap-2 text-slate-400 hover:text-white text-sm w-full px-2 py-1 hover:bg-slate-800 rounded transition-colors"
+           >
              <LogOut size={16} /> Sign Out
            </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden h-screen">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0">
           <button 
             className="md:hidden text-slate-500"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -171,7 +172,9 @@ const Layout: React.FC<LayoutProps> = ({ children, currentRole, onRoleChange, cu
           </button>
           
           <div className="flex-1 px-4">
-             {/* Breadcrumb or Title could go here */}
+             <span className="text-sm text-slate-500 hidden md:inline-block">
+                {user.companyName} Workspace
+             </span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -183,8 +186,8 @@ const Layout: React.FC<LayoutProps> = ({ children, currentRole, onRoleChange, cu
             </button>
             <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
               <div className="text-right hidden md:block">
-                <p className="text-sm font-semibold text-slate-700">Jane Doe</p>
-                <p className="text-xs text-slate-500">{currentRole}</p>
+                <p className="text-sm font-semibold text-slate-700">{user.name}</p>
+                <p className="text-xs text-slate-500">{user.email}</p>
               </div>
               <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
                 <UserCircle size={24} />

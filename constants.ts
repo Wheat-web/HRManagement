@@ -1,5 +1,5 @@
 
-import { Candidate, CandidateStage, Role, AuditLog, PolicyDocument, HROpsRequest, Department, Employee, PayrollRecord, LeaveRecord, CompensationChange, PerformanceReview, LetterTemplate, Shift, AttendanceRecord, Message, Interview, RoleDefinition } from './types';
+import { Candidate, CandidateStage, Role, AuditLog, PolicyDocument, HROpsRequest, Department, Employee, PayrollRecord, LeaveRecord, CompensationChange, PerformanceReview, LetterTemplate, Shift, AttendanceRecord, Message, Interview, RoleDefinition, JobOpening } from './types';
 
 export const MOCK_SHIFTS: Shift[] = [
   { id: 'sh1', name: 'General Shift', startTime: '09:00', endTime: '18:00', color: 'bg-blue-100 text-blue-800' },
@@ -7,9 +7,17 @@ export const MOCK_SHIFTS: Shift[] = [
   { id: 'sh3', name: 'Night Shift', startTime: '22:00', endTime: '07:00', color: 'bg-purple-100 text-purple-800' },
 ];
 
+export const MOCK_JOBS: JobOpening[] = [
+  { id: 'j1', title: 'Senior Frontend Engineer', department: 'Engineering', location: 'New York (Hybrid)', type: 'Full-time', status: 'Open', postedDate: '2023-10-01' },
+  { id: 'j2', title: 'Product Manager', department: 'Product', location: 'Remote', type: 'Full-time', status: 'Open', postedDate: '2023-10-05' },
+  { id: 'j3', title: 'UX Designer', department: 'Product', location: 'Remote', type: 'Contract', status: 'Open', postedDate: '2023-10-10' },
+  { id: 'j4', title: 'Data Scientist', department: 'Data', location: 'Chicago', type: 'Full-time', status: 'Draft', postedDate: '2023-10-28' },
+];
+
 export const MOCK_CANDIDATES: Candidate[] = [
   {
     id: 'c1',
+    jobId: 'j1',
     name: 'Alice Johnson',
     role: 'Senior Frontend Engineer',
     stage: CandidateStage.NEW,
@@ -21,6 +29,7 @@ export const MOCK_CANDIDATES: Candidate[] = [
   },
   {
     id: 'c2',
+    jobId: 'j1',
     name: 'Bob Smith',
     role: 'Senior Frontend Engineer',
     stage: CandidateStage.SCREENING,
@@ -34,6 +43,7 @@ export const MOCK_CANDIDATES: Candidate[] = [
   },
   {
     id: 'c3',
+    jobId: 'j2',
     name: 'Charlie Davis',
     role: 'Product Manager',
     stage: CandidateStage.INTERVIEW,
@@ -47,6 +57,7 @@ export const MOCK_CANDIDATES: Candidate[] = [
   },
   {
     id: 'c4',
+    jobId: 'j3',
     name: 'Diana Prince',
     role: 'UX Designer',
     stage: CandidateStage.OFFER,
@@ -87,7 +98,7 @@ export const MOCK_POLICIES: PolicyDocument[] = [
 ];
 
 export const MOCK_AUDIT_LOGS: AuditLog[] = [
-  { id: 'l1', timestamp: '2023-10-27 10:30 AM', user: 'AI Agent', role: Role.ADMIN, action: 'Score Calculation', details: 'Calculated score for Bob Smith: 65/100', aiInvolved: true, riskLevel: 'Low' },
+  { id: 'l1', timestamp: '2023-10-27 10:30 AM', user: 'AI Agent', role: Role.COMPANY_ADMIN, action: 'Score Calculation', details: 'Calculated score for Bob Smith: 65/100', aiInvolved: true, riskLevel: 'Low' },
   { id: 'l2', timestamp: '2023-10-27 11:15 AM', user: 'Sarah (Recruiter)', role: Role.RECRUITER, action: 'Stage Change', details: 'Moved Charlie Davis to Interview', aiInvolved: false, riskLevel: 'Low' },
   { id: 'l3', timestamp: '2023-10-27 02:45 PM', user: 'Mike (Manager)', role: Role.MANAGER, action: 'Override AI Reject', details: 'Manually approved candidate flagged as low match', aiInvolved: true, riskLevel: 'Medium' },
 ];
@@ -109,14 +120,14 @@ export const MOCK_DEPARTMENTS: Department[] = [
 ];
 
 export const MOCK_EMPLOYEES: Employee[] = [
-  { id: 'e1', name: 'Jane Doe', role: 'Software Engineer', department: 'Engineering', email: 'jane@example.com', status: 'Active', joinDate: '2022-03-15', salary: 120000, currency: 'USD', location: 'New York', shiftId: 'sh1', customAttributes: { 'T-Shirt Size': 'M', 'Work Laptop': 'MacBook Pro 16' } },
-  { id: 'e2', name: 'John Smith', role: 'Sales Rep', department: 'Sales', email: 'john@example.com', status: 'Active', joinDate: '2021-06-01', salary: 85000, currency: 'USD', location: 'Chicago', shiftId: 'sh1', customAttributes: { 'T-Shirt Size': 'L' } },
-  { id: 'e3', name: 'Emily Blunt', role: 'HR Manager', department: 'HR & Ops', email: 'emily@example.com', status: 'On Leave', joinDate: '2020-01-10', salary: 95000, currency: 'USD', location: 'Remote', shiftId: 'sh2' },
-  { id: 'e4', name: 'Chris Evans', role: 'Product Owner', department: 'Product', email: 'chris@example.com', status: 'Active', joinDate: '2023-02-20', salary: 135000, currency: 'USD', location: 'New York', shiftId: 'sh1' },
-  { id: 'e5', name: 'Michael Scott', role: 'Regional Manager', department: 'Sales', email: 'michael@example.com', status: 'Active', joinDate: '2010-04-15', salary: 110000, currency: 'USD', location: 'Scranton', shiftId: 'sh1' },
-  { id: 'e6', name: 'Pam Beesly', role: 'Office Administrator', department: 'HR & Ops', email: 'pam@example.com', status: 'Active', joinDate: '2012-09-01', salary: 60000, currency: 'USD', location: 'Scranton', shiftId: 'sh2' },
-  { id: 'e7', name: 'Jim Halpert', role: 'Marketing Manager', department: 'Marketing', email: 'jim@example.com', status: 'Active', joinDate: '2011-05-20', salary: 105000, currency: 'USD', location: 'Scranton', shiftId: 'sh1' },
-  { id: 'e8', name: 'Stanley Hudson', role: 'Sales Rep', department: 'Sales', email: 'stanley@example.com', status: 'Terminated', joinDate: '2005-02-14', salary: 90000, currency: 'USD', location: 'Chicago', shiftId: 'sh3' },
+  { id: 'e1', name: 'Jane Doe', role: 'Software Engineer', department: 'Engineering', email: 'jane@example.com', status: 'Active', joinDate: '2022-03-15', salary: 120000, paymentFrequency: 'Annual', currency: 'USD', location: 'New York', shiftId: 'sh1', customAttributes: { 'T-Shirt Size': 'M', 'Work Laptop': 'MacBook Pro 16' } },
+  { id: 'e2', name: 'John Smith', role: 'Sales Rep', department: 'Sales', email: 'john@example.com', status: 'Active', joinDate: '2021-06-01', salary: 45, paymentFrequency: 'Hourly', currency: 'USD', location: 'Chicago', shiftId: 'sh1', customAttributes: { 'T-Shirt Size': 'L' } },
+  { id: 'e3', name: 'Emily Blunt', role: 'HR Manager', department: 'HR & Ops', email: 'emily@example.com', status: 'On Leave', joinDate: '2020-01-10', salary: 95000, paymentFrequency: 'Annual', currency: 'USD', location: 'Remote', shiftId: 'sh2' },
+  { id: 'e4', name: 'Chris Evans', role: 'Product Owner', department: 'Product', email: 'chris@example.com', status: 'Active', joinDate: '2023-02-20', salary: 135000, paymentFrequency: 'Annual', currency: 'USD', location: 'New York', shiftId: 'sh1' },
+  { id: 'e5', name: 'Michael Scott', role: 'Regional Manager', department: 'Sales', email: 'michael@example.com', status: 'Active', joinDate: '2010-04-15', salary: 110000, paymentFrequency: 'Annual', currency: 'USD', location: 'Scranton', shiftId: 'sh1' },
+  { id: 'e6', name: 'Pam Beesly', role: 'Office Administrator', department: 'HR & Ops', email: 'pam@example.com', status: 'Active', joinDate: '2012-09-01', salary: 25, paymentFrequency: 'Hourly', currency: 'USD', location: 'Scranton', shiftId: 'sh2' },
+  { id: 'e7', name: 'Jim Halpert', role: 'Marketing Manager', department: 'Marketing', email: 'jim@example.com', status: 'Active', joinDate: '2011-05-20', salary: 8750, paymentFrequency: 'Monthly', currency: 'USD', location: 'Scranton', shiftId: 'sh1' },
+  { id: 'e8', name: 'Stanley Hudson', role: 'Sales Rep', department: 'Sales', email: 'stanley@example.com', status: 'Terminated', joinDate: '2005-02-14', salary: 1800, paymentFrequency: 'Weekly', currency: 'USD', location: 'Chicago', shiftId: 'sh3' },
 ];
 
 export const MOCK_PAYROLL: PayrollRecord[] = [
@@ -137,9 +148,9 @@ export const MOCK_LEAVES: LeaveRecord[] = [
 ];
 
 export const MOCK_COMPENSATION_CHANGES: CompensationChange[] = [
-  { id: 'cc1', employeeId: 'e1', date: '2023-01-15', type: 'Increment', amount: 0, previousSalary: 110000, newSalary: 120000, reason: 'Annual Performance Review', approvedBy: 'David Chen' },
+  { id: 'cc1', employeeId: 'e1', date: '2023-01-15', type: 'Structure Change', amount: 0, previousSalary: 110000, newSalary: 120000, newFrequency: 'Annual', reason: 'Annual Performance Review', approvedBy: 'David Chen' },
   { id: 'cc2', employeeId: 'e1', date: '2023-06-30', type: 'Bonus', amount: 5000, reason: 'Project Completion Bonus', approvedBy: 'David Chen' },
-  { id: 'cc3', employeeId: 'e2', date: '2023-03-01', type: 'Increment', amount: 0, previousSalary: 80000, newSalary: 85000, reason: 'Market Adjustment', approvedBy: 'Dwight S.' },
+  { id: 'cc3', employeeId: 'e2', date: '2023-03-01', type: 'Structure Change', amount: 0, previousSalary: 42, newSalary: 45, newFrequency: 'Hourly', reason: 'Market Adjustment', approvedBy: 'Dwight S.' },
 ];
 
 export const MOCK_PERFORMANCE_REVIEWS: PerformanceReview[] = [
@@ -147,7 +158,7 @@ export const MOCK_PERFORMANCE_REVIEWS: PerformanceReview[] = [
     id: 'pr1', 
     employeeId: 'e1', 
     employeeName: 'Jane Doe', 
-    role: 'Software Engineer',
+    role: 'Software Engineer', 
     department: 'Engineering',
     period: 'Q3 2023',
     metrics: { tasksCompleted: 42, attendance: 98, qualityScore: 9.2 },
@@ -162,7 +173,7 @@ export const MOCK_PERFORMANCE_REVIEWS: PerformanceReview[] = [
     id: 'pr2', 
     employeeId: 'e2', 
     employeeName: 'John Smith', 
-    role: 'Sales Rep',
+    role: 'Sales Rep', 
     department: 'Sales',
     period: 'Q3 2023',
     metrics: { tasksCompleted: 15, attendance: 90, qualityScore: 7.5 },
@@ -177,7 +188,7 @@ export const MOCK_PERFORMANCE_REVIEWS: PerformanceReview[] = [
     id: 'pr3', 
     employeeId: 'e4', 
     employeeName: 'Chris Evans', 
-    role: 'Product Owner',
+    role: 'Product Owner', 
     department: 'Product',
     period: 'Q3 2023',
     metrics: { tasksCompleted: 28, attendance: 95, qualityScore: 8.8 },

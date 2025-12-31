@@ -1,16 +1,21 @@
+
 import React, { useState, useRef } from 'react';
-import { Upload, FileText, Check, AlertCircle, Loader2, X, PenTool, User } from 'lucide-react';
+import { Upload, FileText, Check, AlertCircle, Loader2, X, PenTool, User, Briefcase, Paperclip } from 'lucide-react';
 import { parseResume } from '../services/geminiService';
-import { Candidate, CandidateStage } from '../types';
+import { Candidate, CandidateStage, JobOpening } from '../types';
 
 interface ResumeUploadProps {
   onClose: () => void;
   onAddCandidate: (c: Candidate) => void;
+  jobs: JobOpening[];
 }
 
-const ResumeUpload: React.FC<ResumeUploadProps> = ({ onClose, onAddCandidate }) => {
+const ResumeUpload: React.FC<ResumeUploadProps> = ({ onClose, onAddCandidate, jobs }) => {
   const [activeTab, setActiveTab] = useState<'upload' | 'manual'>('upload');
   
+  // Job Selection
+  const [selectedJobId, setSelectedJobId] = useState<string>('');
+
   // Upload State
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -28,6 +33,7 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onClose, onAddCandidate }) 
     skills: '',
     summary: ''
   });
+  const [manualResumeFile, setManualResumeFile] = useState<File | null>(null);
 
   // --- Upload Handlers ---
   const handleDragOver = (e: React.DragEvent) => {
@@ -50,6 +56,12 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onClose, onAddCandidate }) 
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
       processFile(e.target.files[0]);
+    }
+  };
+
+  const handleManualFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        setManualResumeFile(e.target.files[0]);
     }
   };
 
@@ -107,12 +119,13 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onClose, onAddCandidate }) 
     
     const newCandidate: Candidate = {
       id: `c${Date.now()}`,
+      jobId: selectedJobId || undefined,
       name: candidateData.name || "Unknown Candidate",
       role: candidateData.role || "Applicant",
       email: candidateData.email || "",
       experience: candidateData.experience || 0,
       skills: candidateData.skills || [],
-      resumeSummary: candidateData.resumeSummary || "",
+      resumeSummary: candidateData.resumeSummary || (manualResumeFile ? `Resume attached: ${manualResumeFile.name}` : ""),
       stage: CandidateStage.NEW,
       appliedDate: new Date().toLocaleDateString(),
     };
@@ -205,6 +218,21 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onClose, onAddCandidate }) 
                           <Check size={16} /> Analysis Complete
                         </div>
                         <div className="space-y-3 text-sm">
+                          {/* Job Selection in Upload Mode */}
+                          <div>
+                             <label className="text-xs text-slate-500 block mb-1">Assign to Job Opening</label>
+                             <select 
+                                value={selectedJobId}
+                                onChange={(e) => setSelectedJobId(e.target.value)}
+                                className="w-full px-2 py-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500 text-sm bg-white"
+                             >
+                                <option value="">-- General Application --</option>
+                                {jobs.filter(j => j.status === 'Open').map(job => (
+                                   <option key={job.id} value={job.id}>{job.title}</option>
+                                ))}
+                             </select>
+                          </div>
+
                           <div>
                             <label className="text-xs text-slate-500 block">Candidate Name</label>
                             <input 
@@ -242,6 +270,20 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onClose, onAddCandidate }) 
           ) : (
             // Manual View
             <div className="space-y-4">
+               <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Assign to Job Opening</label>
+                  <select 
+                     value={selectedJobId}
+                     onChange={(e) => setSelectedJobId(e.target.value)}
+                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+                  >
+                     <option value="">-- General Application --</option>
+                     {jobs.filter(j => j.status === 'Open').map(job => (
+                        <option key={job.id} value={job.id}>{job.title} - {job.department}</option>
+                     ))}
+                  </select>
+               </div>
+
                <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Full Name <span className="text-red-500">*</span></label>
                   <input 
@@ -292,13 +334,43 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({ onClose, onAddCandidate }) 
                     />
                   </div>
                </div>
+               
+               {/* Resume Attachment for Manual Mode */}
+               <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Resume Attachment</label>
+                  <div className="relative">
+                     <input 
+                        type="file" 
+                        id="manualResume"
+                        className="hidden" 
+                        accept=".pdf,.doc,.docx"
+                        onChange={handleManualFileChange}
+                     />
+                     <label 
+                        htmlFor="manualResume"
+                        className="flex items-center gap-2 w-full px-3 py-2 border border-slate-300 border-dashed rounded-lg text-sm text-slate-600 cursor-pointer hover:bg-slate-50 hover:border-indigo-300 transition-colors"
+                     >
+                        <Paperclip size={16} /> 
+                        {manualResumeFile ? manualResumeFile.name : "Attach resume file (PDF/DOCX)..."}
+                     </label>
+                     {manualResumeFile && (
+                        <button 
+                           onClick={(e) => { e.preventDefault(); setManualResumeFile(null); }}
+                           className="absolute right-2 top-2 text-slate-400 hover:text-red-500"
+                        >
+                           <X size={16} />
+                        </button>
+                     )}
+                  </div>
+               </div>
+
                <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Professional Summary</label>
                   <textarea 
                     value={manualData.summary}
                     onChange={(e) => setManualData({...manualData, summary: e.target.value})}
                     placeholder="Brief overview of candidate's background..."
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm h-24 resize-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm h-20 resize-none"
                   />
                </div>
             </div>

@@ -145,6 +145,7 @@ const OnboardingHub: React.FC<OnboardingHubProps> = ({ candidates = [], employee
     status: 'Onboarding',
     joinDate: new Date().toISOString().split('T')[0],
     salary: 0, 
+    paymentFrequency: 'Annual',
     currency: 'USD', 
     location: 'Remote', 
     shiftId: 'sh1',

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Users, Clock, CheckCircle, AlertTriangle, TrendingUp, Calendar, FileText, Briefcase, User, Mail, MapPin, Activity, DollarSign, Building2, UserPlus, ArrowUpRight, ArrowRight } from 'lucide-react';
@@ -161,7 +162,7 @@ const Dashboard: React.FC<DashboardProps> = ({ role }) => {
   }
 
   // Admin View
-  if (role === Role.ADMIN) {
+  if (role === Role.COMPANY_ADMIN || role === Role.HR_ADMIN) {
     const totalEmployees = MOCK_EMPLOYEES.length;
     const activeEmployees = MOCK_EMPLOYEES.filter(e => e.status === 'Active').length;
     const onLeave = MOCK_EMPLOYEES.filter(e => e.status === 'On Leave').length;
