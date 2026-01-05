@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Mail, Lock, ArrowRight, ShieldCheck, CheckCircle2, User, ChevronRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ShieldCheck, CheckCircle2, User, ChevronRight, Briefcase } from 'lucide-react';
 import { UserProfile, Role } from '../types';
 
 interface LoginProps {
@@ -25,13 +25,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup }) => {
       if (email.includes('manager')) role = Role.MANAGER;
       if (email.includes('emp')) role = Role.EMPLOYEE;
       if (email.includes('admin')) role = Role.COMPANY_ADMIN;
+      if (email.includes('candidate')) role = Role.CANDIDATE;
 
       const user: UserProfile = {
         id: 'u1',
         name: email.split('@')[0] || 'Demo User',
         email: email || 'demo@peoplecore.ai',
         role: role,
-        companyName: 'PeopleCore Demo Corp',
+        companyName: role === Role.CANDIDATE ? 'Job Seeker' : 'PeopleCore Demo Corp',
         avatarUrl: undefined
       };
       
@@ -170,11 +171,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup }) => {
                           <p className="text-[10px] text-slate-400">Full Access</p>
                        </div>
                     </button>
-                    <button onClick={() => handleDemoClick('recruit@demo.com')} className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-purple-50 hover:border-purple-200 transition-all text-left group">
-                       <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-purple-100 group-hover:text-purple-600"><User size={14} /></div>
+                    <button onClick={() => handleDemoClick('candidate@demo.com')} className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-pink-50 hover:border-pink-200 transition-all text-left group">
+                       <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-pink-100 group-hover:text-pink-600"><Briefcase size={14} /></div>
                        <div>
-                          <p className="text-xs font-bold text-slate-700 group-hover:text-purple-800">Recruiter</p>
-                          <p className="text-[10px] text-slate-400">Hiring Pipeline</p>
+                          <p className="text-xs font-bold text-slate-700 group-hover:text-pink-800">Candidate</p>
+                          <p className="text-[10px] text-slate-400">Apply for Jobs</p>
                        </div>
                     </button>
                     <button onClick={() => handleDemoClick('manager@demo.com')} className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-emerald-50 hover:border-emerald-200 transition-all text-left group">

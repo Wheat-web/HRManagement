@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Mail, Lock, ArrowRight, User, Building, Shield, ChevronLeft, KeyRound, Check, Loader2, UserPlus, Briefcase } from 'lucide-react';
+import { Mail, Lock, ArrowRight, User, Shield, ChevronLeft, KeyRound, Loader2, UserPlus, Briefcase } from 'lucide-react';
 import { UserProfile, Role } from '../types';
 import { useToast } from '../context/ToastContext';
 
@@ -9,17 +9,16 @@ interface SignupProps {
   onSwitchToLogin: () => void;
 }
 
-type SignupMode = 'register_org' | 'add_user';
+type SignupMode = 'add_user' | 'candidate';
 
 const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
   const { showToast } = useToast();
-  const [mode, setMode] = useState<SignupMode>('register_org');
+  const [mode, setMode] = useState<SignupMode>('candidate');
   const [loading, setLoading] = useState(false);
 
-  // Register Org State
-  const [orgData, setOrgData] = useState({
+  // Candidate State
+  const [candidateData, setCandidateData] = useState({
     fullName: '',
-    companyName: '',
     email: '',
     password: ''
   });
@@ -58,23 +57,23 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
     }, 1500);
   };
 
-  const handleRegisterOrg = (e: React.FormEvent) => {
+  const handleRegisterCandidate = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
     setTimeout(() => {
       const user: UserProfile = {
         id: `u${Date.now()}`,
-        name: orgData.fullName,
-        email: orgData.email,
-        role: Role.COMPANY_ADMIN,
-        companyName: orgData.companyName,
+        name: candidateData.fullName,
+        email: candidateData.email,
+        role: Role.CANDIDATE,
+        companyName: 'Job Seeker',
         avatarUrl: undefined
       };
       
       onSignup(user);
       setLoading(false);
-      showToast("Organization registered successfully!", 'success');
+      showToast("Candidate account created successfully!", 'success');
     }, 1500);
   };
 
@@ -124,11 +123,11 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
                   <ChevronLeft size={16} /> Back to Login
                </button>
                <h1 className="text-4xl font-bold text-white mb-4">
-                  {mode === 'register_org' ? "Build your\ndream team." : "Grow your\nworkforce."}
+                  {mode === 'candidate' ? "Find your\ndream job." : "Grow your\nworkforce."}
                </h1>
                <p className="text-slate-400">
-                  {mode === 'register_org' 
-                    ? "Join thousands of companies using PeopleCore to optimize their HR operations."
+                  {mode === 'candidate' 
+                    ? "Access exclusive job openings and fast-track your career with AI-powered matching."
                     : "Securely add new members to your organization with role-based access control."}
                </p>
             </div>
@@ -154,67 +153,54 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
                {/* Mode Tabs */}
                <div className="flex bg-slate-100 p-1 rounded-xl mb-8">
                   <button 
-                    onClick={() => setMode('register_org')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all ${mode === 'register_org' ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    onClick={() => setMode('candidate')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs lg:text-sm font-bold rounded-lg transition-all ${mode === 'candidate' ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
                   >
-                     <Building size={16} /> New Company
+                     <Briefcase size={14} /> Job Seeker
                   </button>
                   <button 
                     onClick={() => setMode('add_user')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all ${mode === 'add_user' ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs lg:text-sm font-bold rounded-lg transition-all ${mode === 'add_user' ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
                   >
-                     <UserPlus size={16} /> Add Team Member
+                     <UserPlus size={14} /> Member
                   </button>
                </div>
 
                <div className="mb-6">
                   <h2 className="text-2xl font-bold text-slate-900 mb-1">
-                     {mode === 'register_org' ? "Register Organization" : "Create User Account"}
+                     {mode === 'candidate' ? "Candidate Sign Up" : "Create User Account"}
                   </h2>
                   <p className="text-slate-500 text-sm">
-                     {mode === 'register_org' 
-                        ? "Create a new workspace for your company." 
+                     {mode === 'candidate' 
+                        ? "Create a profile to apply for jobs."
                         : "Authorize as Admin to add a new user."}
                   </p>
                </div>
 
-               {mode === 'register_org' ? (
-                  /* REGISTER ORG FORM */
-                  <form onSubmit={handleRegisterOrg} className="space-y-4">
-                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Full Name</label>
-                           <input 
-                              type="text" 
-                              required
-                              value={orgData.fullName}
-                              onChange={(e) => setOrgData({...orgData, fullName: e.target.value})}
-                              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                              placeholder="John Doe"
-                           />
-                        </div>
-                        <div>
-                           <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Company Name</label>
-                           <input 
-                              type="text" 
-                              required
-                              value={orgData.companyName}
-                              onChange={(e) => setOrgData({...orgData, companyName: e.target.value})}
-                              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                              placeholder="Acme Inc."
-                           />
-                        </div>
+               {mode === 'candidate' && (
+                  /* REGISTER CANDIDATE FORM */
+                  <form onSubmit={handleRegisterCandidate} className="space-y-4">
+                     <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Full Name</label>
+                        <input 
+                           type="text" 
+                           required
+                           value={candidateData.fullName}
+                           onChange={(e) => setCandidateData({...candidateData, fullName: e.target.value})}
+                           className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                           placeholder="John Doe"
+                        />
                      </div>
 
                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Work Email</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
                         <input 
                            type="email" 
                            required
-                           value={orgData.email}
-                           onChange={(e) => setOrgData({...orgData, email: e.target.value})}
+                           value={candidateData.email}
+                           onChange={(e) => setCandidateData({...candidateData, email: e.target.value})}
                            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                           placeholder="admin@company.com"
+                           placeholder="john@example.com"
                         />
                      </div>
 
@@ -223,8 +209,8 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
                         <input 
                            type="password" 
                            required
-                           value={orgData.password}
-                           onChange={(e) => setOrgData({...orgData, password: e.target.value})}
+                           value={candidateData.password}
+                           onChange={(e) => setCandidateData({...candidateData, password: e.target.value})}
                            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                            placeholder="Create password"
                         />
@@ -236,11 +222,13 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
                            disabled={loading}
                            className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2"
                         >
-                           {loading ? <Loader2 className="animate-spin" size={18} /> : <>Create Workspace <ArrowRight size={18} /></>}
+                           {loading ? <Loader2 className="animate-spin" size={18} /> : <>Create Candidate Profile <ArrowRight size={18} /></>}
                         </button>
                      </div>
                   </form>
-               ) : (
+               )}
+
+               {mode === 'add_user' && (
                   /* ADD USER FORM */
                   <form onSubmit={handleAddUser} className="space-y-5">
                      
@@ -289,7 +277,7 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
                               onChange={(e) => setUserData({...userData, newUserRole: e.target.value as Role})}
                               className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
                            >
-                              {Object.values(Role).filter(r => r !== Role.COMPANY_ADMIN).map(role => (
+                              {Object.values(Role).filter(r => r !== Role.COMPANY_ADMIN && r !== Role.CANDIDATE).map(role => (
                                  <option key={role} value={role}>{role}</option>
                               ))}
                            </select>

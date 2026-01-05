@@ -4,7 +4,8 @@ export enum Role {
   HR_ADMIN = 'HR Admin',
   RECRUITER = 'Recruiter',
   MANAGER = 'Hiring Manager',
-  EMPLOYEE = 'Employee'
+  EMPLOYEE = 'Employee',
+  CANDIDATE = 'Candidate'
 }
 
 export enum CandidateStage {
@@ -22,6 +23,18 @@ export interface UserProfile {
   role: Role;
   companyName: string;
   avatarUrl?: string;
+  branchId?: string; // If user is restricted to a branch
+}
+
+export interface Branch {
+  id: string;
+  name: string;
+  location: string; // Physical address string
+  currency: string;
+  timezone: string;
+  headCount: number; // Calculated field
+  manager: string;
+  isHeadquarters?: boolean;
 }
 
 export interface JobOpening {
@@ -29,6 +42,7 @@ export interface JobOpening {
   title: string;
   department: string;
   location: string;
+  branchId?: string;
   type: 'Full-time' | 'Contract' | 'Part-time' | 'Internship';
   status: 'Open' | 'Closed' | 'Draft';
   postedDate: string;
@@ -93,6 +107,7 @@ export interface Department {
   manager: string;
   headCount: number;
   location: string;
+  branchId?: string;
 }
 
 export interface Shift {
@@ -117,6 +132,7 @@ export interface Employee {
   paymentFrequency: PaymentFrequency; 
   currency: string;
   location: string;
+  branchId: string; // Link to Branch
   shiftId: string; // Link to Shift
   customAttributes?: Record<string, string>; // Flexible fields
 }

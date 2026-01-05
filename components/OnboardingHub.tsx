@@ -149,6 +149,7 @@ const OnboardingHub: React.FC<OnboardingHubProps> = ({ candidates = [], employee
     currency: 'USD', 
     location: 'Remote', 
     shiftId: 'sh1',
+    branchId: 'b1', // Default assignment
     customAttributes: buddyId ? { 'Onboarding Buddy': employees.find(e => e.id === buddyId)?.name || '' } : undefined
   });
 
@@ -407,7 +408,7 @@ const OnboardingHub: React.FC<OnboardingHubProps> = ({ candidates = [], employee
                               type="checkbox" 
                               checked={createEmployeeRecord}
                               onChange={(e) => setCreateEmployeeRecord(e.target.checked)}
-                              className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                              className="rounded border-slate-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
                            />
                            Create Employee Record (Add to Directory)
                         </label>

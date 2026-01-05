@@ -23,8 +23,11 @@ import InterviewSchedule from './components/InterviewSchedule';
 import PolicyManagement from './components/PolicyManagement';
 import RoleManagement from './components/RoleManagement';
 import OnboardingHub from './components/OnboardingHub';
-import { MOCK_CANDIDATES, MOCK_AUDIT_LOGS, MOCK_DEPARTMENTS, MOCK_EMPLOYEES, MOCK_MESSAGES, MOCK_PAYROLL, MOCK_JOBS } from './constants';
-import { Candidate, Role, CandidateStage, AuditLog, Message, Employee, Department, PayrollRecord, JobOpening, UserProfile } from './types';
+import JobPortal from './components/JobPortal';
+import BranchManagement from './components/BranchManagement';
+import CompanyRegistration from './components/CompanyRegistration';
+import { MOCK_CANDIDATES, MOCK_AUDIT_LOGS, MOCK_DEPARTMENTS, MOCK_EMPLOYEES, MOCK_MESSAGES, MOCK_PAYROLL, MOCK_JOBS, MOCK_BRANCHES } from './constants';
+import { Candidate, Role, CandidateStage, AuditLog, Message, Employee, Department, PayrollRecord, JobOpening, UserProfile, Branch } from './types';
 import { ToastProvider } from './context/ToastContext';
 
 function App() {
@@ -34,29 +37,41 @@ function App() {
 
   const [currentView, setCurrentView] = useState('dashboard');
   
-  // State for Recruitment
+  // --- Data State ---
+  const [branches, setBranches] = useState<Branch[]>(MOCK_BRANCHES);
+  // 'all' means Centralized View (Admin sees all)
+  // specific ID means Branch View (Data filtered)
+  const [selectedBranchId, setSelectedBranchId] = useState<string>('all');
+
   const [candidates, setCandidates] = useState<Candidate[]>(MOCK_CANDIDATES);
   const [jobs, setJobs] = useState<JobOpening[]>(MOCK_JOBS);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
-  // State for Employees & Departments (Lifted)
   const [employees, setEmployees] = useState<Employee[]>(MOCK_EMPLOYEES);
   const [departments, setDepartments] = useState<Department[]>(MOCK_DEPARTMENTS);
 
-  // State for Payroll
   const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>(MOCK_PAYROLL);
-
-  // State for Audit Logs
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(MOCK_AUDIT_LOGS);
-
-  // State for Messaging
   const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
 
-  // Auth Handlers
+  // --- Handlers ---
+
   const handleLogin = (loggedInUser: UserProfile) => {
     setUser(loggedInUser);
-    setCurrentView('dashboard');
+    
+    // Set default branch context based on user role/assignment
+    if (loggedInUser.role === Role.COMPANY_ADMIN || loggedInUser.role === Role.HR_ADMIN) {
+        setSelectedBranchId('all');
+    } else if (loggedInUser.branchId) {
+        setSelectedBranchId(loggedInUser.branchId);
+    } else {
+        // Fallback for demo users without branch
+        setSelectedBranchId('all'); 
+    }
+
+    // If logging in as candidate, default to 'jobs' view
+    setCurrentView(loggedInUser.role === Role.CANDIDATE ? 'jobs' : 'dashboard');
   };
 
   const handleLogout = () => {
@@ -77,6 +92,23 @@ function App() {
     addAuditLog('Resume Upload', `Added new candidate: ${newCandidate.name}`, false);
   };
 
+  const handleApplyJob = (jobId: string, candidateData: Partial<Candidate>) => {
+    const newCandidate: Candidate = {
+      id: `c_${Date.now()}`,
+      jobId: jobId,
+      name: candidateData.name || 'Unknown',
+      email: candidateData.email || 'unknown@email.com',
+      role: candidateData.role || 'Applicant',
+      stage: CandidateStage.NEW,
+      experience: candidateData.experience || 0,
+      skills: candidateData.skills || [],
+      resumeSummary: candidateData.resumeSummary || 'Applied via Job Portal',
+      appliedDate: new Date().toISOString().split('T')[0]
+    };
+    setCandidates(prev => [newCandidate, ...prev]);
+    addAuditLog('Job Application', `${newCandidate.name} applied for Job ID: ${jobId}`, false);
+  };
+
   const handleAddJob = (newJob: JobOpening) => {
     setJobs(prev => [newJob, ...prev]);
     addAuditLog('Job Creation', `Created new job opening: ${newJob.title}`, false);
@@ -90,6 +122,21 @@ function App() {
   const handleAddDepartment = (newDept: Department) => {
     setDepartments(prev => [...prev, newDept]);
     addAuditLog('Org Management', `Created new department: ${newDept.name}`, false);
+  };
+
+  const handleAddBranch = (newBranch: Branch) => {
+    setBranches(prev => [...prev, newBranch]);
+    addAuditLog('Branch Management', `Opened new branch: ${newBranch.name}`, false);
+  };
+
+  const handleUpdateBranch = (updated: Branch) => {
+    setBranches(prev => prev.map(b => b.id === updated.id ? updated : b));
+    addAuditLog('Branch Management', `Updated branch details: ${updated.name}`, false);
+  };
+
+  const handleDeleteBranch = (id: string) => {
+    setBranches(prev => prev.filter(b => b.id !== id));
+    addAuditLog('Branch Management', `Deleted branch ID: ${id}`, true);
   };
 
   const handleProcessPayroll = (processedIds: string[]) => {
@@ -113,7 +160,12 @@ function App() {
       .filter(r => r.period === period)
       .map(r => r.employeeId);
 
-    const eligibleEmployees = employees.filter(e => 
+    // Filter employees based on current branch context before generating payroll
+    const contextEmployees = selectedBranchId === 'all' 
+        ? employees 
+        : employees.filter(e => e.branchId === selectedBranchId);
+
+    const eligibleEmployees = contextEmployees.filter(e => 
       (e.status === 'Active' || e.status === 'On Leave') && 
       !existingIds.includes(e.id)
     );
@@ -121,24 +173,15 @@ function App() {
     if (eligibleEmployees.length === 0) return;
 
     const newRecords: PayrollRecord[] = eligibleEmployees.map(e => {
-        // Calculate monthly base based on frequency
         let monthlyBase = 0;
-        if (e.paymentFrequency === 'Hourly') {
-            monthlyBase = Math.round(e.salary * 160); // Approx 160 hours/month
-        } else if (e.paymentFrequency === 'Daily') {
-            monthlyBase = Math.round(e.salary * 22); // Approx 22 days/month
-        } else if (e.paymentFrequency === 'Weekly') {
-            monthlyBase = Math.round(e.salary * 4.33); // Approx 4.33 weeks/month
-        } else if (e.paymentFrequency === 'Monthly') {
-            monthlyBase = e.salary;
-        } else {
-            // Annual
-            monthlyBase = Math.round(e.salary / 12);
-        }
+        if (e.paymentFrequency === 'Hourly') monthlyBase = Math.round(e.salary * 160); 
+        else if (e.paymentFrequency === 'Daily') monthlyBase = Math.round(e.salary * 22); 
+        else if (e.paymentFrequency === 'Weekly') monthlyBase = Math.round(e.salary * 4.33); 
+        else if (e.paymentFrequency === 'Monthly') monthlyBase = e.salary;
+        else monthlyBase = Math.round(e.salary / 12);
 
-        // Simple mock logic for deductions (e.g. 20% tax + benefits)
         const deductions = Math.round(monthlyBase * 0.22); 
-        const bonus = 0; // Default bonus
+        const bonus = 0; 
         const netPay = monthlyBase + bonus - deductions;
 
         return {
@@ -157,7 +200,7 @@ function App() {
     });
 
     setPayrollRecords(prev => [...prev, ...newRecords]);
-    addAuditLog('Payroll', `Generated ${newRecords.length} payroll records for ${period}`, true);
+    addAuditLog('Payroll', `Generated ${newRecords.length} payroll records for ${period} (${selectedBranchId === 'all' ? 'All Branches' : 'Current Branch'})`, true);
   };
 
   const addAuditLog = (action: string, details: string, isRisk: boolean) => {
@@ -174,7 +217,6 @@ function App() {
     setAuditLogs([newLog, ...auditLogs]);
   };
 
-  // Messaging Handlers
   const handleSendMessage = (newMessage: Message) => {
     setMessages(prev => [newMessage, ...prev]);
   };
@@ -183,15 +225,73 @@ function App() {
     setMessages(prev => prev.map(m => m.id === messageId ? { ...m, isRead: true } : m));
   };
 
+  // --- Filtering based on Branch Context ---
+  // If selectedBranchId is 'all', show everything. Else filter.
+  
+  const visibleEmployees = selectedBranchId === 'all' 
+    ? employees 
+    : employees.filter(e => e.branchId === selectedBranchId);
+
+  const visibleJobs = selectedBranchId === 'all'
+    ? jobs
+    : jobs.filter(j => j.branchId === selectedBranchId);
+
+  // Candidates don't have direct branchId usually, but are linked to jobs which have branchId
+  // We need to filter candidates whose jobId belongs to a job in the selected branch
+  const visibleCandidates = selectedBranchId === 'all'
+    ? candidates
+    : candidates.filter(c => {
+        if (!c.jobId) return true; // General app
+        const job = jobs.find(j => j.id === c.jobId);
+        return job?.branchId === selectedBranchId;
+    });
+
+  const visibleDepartments = selectedBranchId === 'all'
+    ? departments
+    : departments.filter(d => d.branchId === selectedBranchId);
+
+  // Filter payroll records by filtered employees
+  const visiblePayroll = payrollRecords.filter(p => 
+    visibleEmployees.some(e => e.id === p.employeeId)
+  );
+
   const renderContent = () => {
     switch (currentView) {
       case 'dashboard':
-        return <Dashboard role={user!.role} />;
+        return <Dashboard role={user!.role} />; // Dashboard needs update to accept filtered stats props if we want deeper integration, but keeping simple for now
+      case 'branches':
+        return (
+            <BranchManagement 
+                branches={branches}
+                employees={employees}
+                onAddBranch={handleAddBranch}
+                onUpdateBranch={handleUpdateBranch}
+                onDeleteBranch={handleDeleteBranch}
+            />
+        );
+      case 'jobs':
+        return (
+          <JobPortal 
+            jobs={visibleJobs} 
+            currentUser={user!} 
+            applications={candidates} 
+            onApply={handleApplyJob} 
+          />
+        );
+      case 'applications':
+        return (
+          <JobPortal 
+            jobs={visibleJobs} 
+            currentUser={user!} 
+            applications={candidates} 
+            onApply={handleApplyJob} 
+          />
+        );
       case 'recruitment':
         return (
           <RecruitmentBoard 
-            candidates={candidates} 
-            jobs={jobs}
+            candidates={visibleCandidates} 
+            jobs={visibleJobs}
             onSelectCandidate={setSelectedCandidate}
             onUpdateStage={(c, stage) => {
               handleUpdateCandidate({ ...c, stage });
@@ -208,7 +308,7 @@ function App() {
           <HROps 
             role={user!.role} 
             onSendMessage={handleSendMessage} 
-            payrollRecords={payrollRecords}
+            payrollRecords={visiblePayroll}
             onProcessPayroll={handleProcessPayroll}
           />
         );
@@ -219,9 +319,11 @@ function App() {
       case 'organization':
         return (
           <OrganizationManagement 
-            initialDepartments={departments} 
-            initialEmployees={employees}
-            candidates={candidates} 
+            initialDepartments={visibleDepartments} 
+            initialEmployees={visibleEmployees}
+            branches={branches}
+            selectedBranchId={selectedBranchId}
+            candidates={visibleCandidates} 
             onAddEmployee={handleAddEmployee}
             onAddDepartment={handleAddDepartment}
           />
@@ -233,8 +335,8 @@ function App() {
       case 'payroll':
         return (
           <PayrollManagement 
-            employees={employees}
-            payrollRecords={payrollRecords}
+            employees={visibleEmployees}
+            payrollRecords={visiblePayroll}
             onGeneratePayroll={handleGeneratePayroll}
             onProcessPayroll={handleProcessPayroll}
             onUpdatePayroll={handleUpdatePayroll}
@@ -262,19 +364,19 @@ function App() {
       case 'roles':
          return <RoleManagement />;
       case 'onboarding':
-         return <OnboardingHub candidates={candidates} employees={employees} onAddEmployee={handleAddEmployee} />;
+         return <OnboardingHub candidates={visibleCandidates} employees={visibleEmployees} onAddEmployee={handleAddEmployee} />;
+      case 'register_org':
+         return <CompanyRegistration />;
       default:
         return <Dashboard role={user!.role} />;
     }
   };
 
-  // Determine Unread Count for Badge
   const currentUserId = (user?.role === Role.HR_ADMIN || user?.role === Role.COMPANY_ADMIN) ? 'admin' : 'e1';
   const unreadMessagesCount = messages.filter(m => m.recipientId === currentUserId && !m.isRead).length;
 
   return (
     <ToastProvider>
-      {/* Auth Screen Logic */}
       {!user ? (
         authView === 'login' ? (
           <Login onLogin={handleLogin} onSwitchToSignup={() => setAuthView('signup')} />
@@ -282,9 +384,11 @@ function App() {
           <Signup onSignup={handleLogin} onSwitchToLogin={() => setAuthView('login')} />
         )
       ) : (
-        /* Authenticated App Logic */
         <Layout 
           user={user}
+          branches={branches}
+          selectedBranchId={selectedBranchId}
+          onSelectBranch={user.role === Role.COMPANY_ADMIN || user.role === Role.HR_ADMIN ? setSelectedBranchId : undefined}
           onLogout={handleLogout}
           currentView={currentView}
           onNavigate={setCurrentView}

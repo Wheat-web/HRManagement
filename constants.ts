@@ -1,5 +1,12 @@
 
-import { Candidate, CandidateStage, Role, AuditLog, PolicyDocument, HROpsRequest, Department, Employee, PayrollRecord, LeaveRecord, CompensationChange, PerformanceReview, LetterTemplate, Shift, AttendanceRecord, Message, Interview, RoleDefinition, JobOpening } from './types';
+import { Candidate, CandidateStage, Role, AuditLog, PolicyDocument, HROpsRequest, Department, Employee, PayrollRecord, LeaveRecord, CompensationChange, PerformanceReview, LetterTemplate, Shift, AttendanceRecord, Message, Interview, RoleDefinition, JobOpening, Branch } from './types';
+
+export const MOCK_BRANCHES: Branch[] = [
+  { id: 'b1', name: 'HQ - New York', location: 'New York, USA', currency: 'USD', timezone: 'EST', headCount: 45, manager: 'Michael Scott', isHeadquarters: true },
+  { id: 'b2', name: 'Midwest Hub', location: 'Chicago, IL', currency: 'USD', timezone: 'CST', headCount: 22, manager: 'Dwight S.' },
+  { id: 'b3', name: 'West Coast', location: 'San Francisco, CA', currency: 'USD', timezone: 'PST', headCount: 12, manager: 'David Chen' },
+  { id: 'b4', name: 'Remote Global', location: 'Remote', currency: 'USD', timezone: 'UTC', headCount: 15, manager: 'Sarah Connor' },
+];
 
 export const MOCK_SHIFTS: Shift[] = [
   { id: 'sh1', name: 'General Shift', startTime: '09:00', endTime: '18:00', color: 'bg-blue-100 text-blue-800' },
@@ -8,10 +15,10 @@ export const MOCK_SHIFTS: Shift[] = [
 ];
 
 export const MOCK_JOBS: JobOpening[] = [
-  { id: 'j1', title: 'Senior Frontend Engineer', department: 'Engineering', location: 'New York (Hybrid)', type: 'Full-time', status: 'Open', postedDate: '2023-10-01' },
-  { id: 'j2', title: 'Product Manager', department: 'Product', location: 'Remote', type: 'Full-time', status: 'Open', postedDate: '2023-10-05' },
-  { id: 'j3', title: 'UX Designer', department: 'Product', location: 'Remote', type: 'Contract', status: 'Open', postedDate: '2023-10-10' },
-  { id: 'j4', title: 'Data Scientist', department: 'Data', location: 'Chicago', type: 'Full-time', status: 'Draft', postedDate: '2023-10-28' },
+  { id: 'j1', title: 'Senior Frontend Engineer', department: 'Engineering', location: 'New York (Hybrid)', branchId: 'b1', type: 'Full-time', status: 'Open', postedDate: '2023-10-01' },
+  { id: 'j2', title: 'Product Manager', department: 'Product', location: 'Remote', branchId: 'b4', type: 'Full-time', status: 'Open', postedDate: '2023-10-05' },
+  { id: 'j3', title: 'UX Designer', department: 'Product', location: 'Remote', branchId: 'b4', type: 'Contract', status: 'Open', postedDate: '2023-10-10' },
+  { id: 'j4', title: 'Data Scientist', department: 'Data', location: 'Chicago', branchId: 'b2', type: 'Full-time', status: 'Draft', postedDate: '2023-10-28' },
 ];
 
 export const MOCK_CANDIDATES: Candidate[] = [
@@ -112,22 +119,22 @@ export const MOCK_HR_REQUESTS: HROpsRequest[] = [
 ];
 
 export const MOCK_DEPARTMENTS: Department[] = [
-  { id: 'd1', name: 'Engineering', manager: 'David Chen', headCount: 24, location: 'New York' },
-  { id: 'd2', name: 'Product', manager: 'Sarah Connor', headCount: 8, location: 'New York' },
-  { id: 'd3', name: 'HR & Ops', manager: 'Michael Scott', headCount: 4, location: 'Remote' },
-  { id: 'd4', name: 'Sales', manager: 'Dwight S.', headCount: 15, location: 'Chicago' },
-  { id: 'd5', name: 'Marketing', manager: 'Jim Halpert', headCount: 10, location: 'Scranton' },
+  { id: 'd1', name: 'Engineering', manager: 'David Chen', headCount: 24, location: 'New York', branchId: 'b1' },
+  { id: 'd2', name: 'Product', manager: 'Sarah Connor', headCount: 8, location: 'New York', branchId: 'b1' },
+  { id: 'd3', name: 'HR & Ops', manager: 'Michael Scott', headCount: 4, location: 'Remote', branchId: 'b4' },
+  { id: 'd4', name: 'Sales', manager: 'Dwight S.', headCount: 15, location: 'Chicago', branchId: 'b2' },
+  { id: 'd5', name: 'Marketing', manager: 'Jim Halpert', headCount: 10, location: 'Scranton', branchId: 'b1' },
 ];
 
 export const MOCK_EMPLOYEES: Employee[] = [
-  { id: 'e1', name: 'Jane Doe', role: 'Software Engineer', department: 'Engineering', email: 'jane@example.com', status: 'Active', joinDate: '2022-03-15', salary: 120000, paymentFrequency: 'Annual', currency: 'USD', location: 'New York', shiftId: 'sh1', customAttributes: { 'T-Shirt Size': 'M', 'Work Laptop': 'MacBook Pro 16' } },
-  { id: 'e2', name: 'John Smith', role: 'Sales Rep', department: 'Sales', email: 'john@example.com', status: 'Active', joinDate: '2021-06-01', salary: 45, paymentFrequency: 'Hourly', currency: 'USD', location: 'Chicago', shiftId: 'sh1', customAttributes: { 'T-Shirt Size': 'L' } },
-  { id: 'e3', name: 'Emily Blunt', role: 'HR Manager', department: 'HR & Ops', email: 'emily@example.com', status: 'On Leave', joinDate: '2020-01-10', salary: 95000, paymentFrequency: 'Annual', currency: 'USD', location: 'Remote', shiftId: 'sh2' },
-  { id: 'e4', name: 'Chris Evans', role: 'Product Owner', department: 'Product', email: 'chris@example.com', status: 'Active', joinDate: '2023-02-20', salary: 135000, paymentFrequency: 'Annual', currency: 'USD', location: 'New York', shiftId: 'sh1' },
-  { id: 'e5', name: 'Michael Scott', role: 'Regional Manager', department: 'Sales', email: 'michael@example.com', status: 'Active', joinDate: '2010-04-15', salary: 110000, paymentFrequency: 'Annual', currency: 'USD', location: 'Scranton', shiftId: 'sh1' },
-  { id: 'e6', name: 'Pam Beesly', role: 'Office Administrator', department: 'HR & Ops', email: 'pam@example.com', status: 'Active', joinDate: '2012-09-01', salary: 25, paymentFrequency: 'Hourly', currency: 'USD', location: 'Scranton', shiftId: 'sh2' },
-  { id: 'e7', name: 'Jim Halpert', role: 'Marketing Manager', department: 'Marketing', email: 'jim@example.com', status: 'Active', joinDate: '2011-05-20', salary: 8750, paymentFrequency: 'Monthly', currency: 'USD', location: 'Scranton', shiftId: 'sh1' },
-  { id: 'e8', name: 'Stanley Hudson', role: 'Sales Rep', department: 'Sales', email: 'stanley@example.com', status: 'Terminated', joinDate: '2005-02-14', salary: 1800, paymentFrequency: 'Weekly', currency: 'USD', location: 'Chicago', shiftId: 'sh3' },
+  { id: 'e1', name: 'Jane Doe', role: 'Software Engineer', department: 'Engineering', email: 'jane@example.com', status: 'Active', joinDate: '2022-03-15', salary: 120000, paymentFrequency: 'Annual', currency: 'USD', location: 'New York', branchId: 'b1', shiftId: 'sh1', customAttributes: { 'T-Shirt Size': 'M', 'Work Laptop': 'MacBook Pro 16' } },
+  { id: 'e2', name: 'John Smith', role: 'Sales Rep', department: 'Sales', email: 'john@example.com', status: 'Active', joinDate: '2021-06-01', salary: 45, paymentFrequency: 'Hourly', currency: 'USD', location: 'Chicago', branchId: 'b2', shiftId: 'sh1', customAttributes: { 'T-Shirt Size': 'L' } },
+  { id: 'e3', name: 'Emily Blunt', role: 'HR Manager', department: 'HR & Ops', email: 'emily@example.com', status: 'On Leave', joinDate: '2020-01-10', salary: 95000, paymentFrequency: 'Annual', currency: 'USD', location: 'Remote', branchId: 'b4', shiftId: 'sh2' },
+  { id: 'e4', name: 'Chris Evans', role: 'Product Owner', department: 'Product', email: 'chris@example.com', status: 'Active', joinDate: '2023-02-20', salary: 135000, paymentFrequency: 'Annual', currency: 'USD', location: 'New York', branchId: 'b1', shiftId: 'sh1' },
+  { id: 'e5', name: 'Michael Scott', role: 'Regional Manager', department: 'Sales', email: 'michael@example.com', status: 'Active', joinDate: '2010-04-15', salary: 110000, paymentFrequency: 'Annual', currency: 'USD', location: 'Scranton', branchId: 'b1', shiftId: 'sh1' },
+  { id: 'e6', name: 'Pam Beesly', role: 'Office Administrator', department: 'HR & Ops', email: 'pam@example.com', status: 'Active', joinDate: '2012-09-01', salary: 25, paymentFrequency: 'Hourly', currency: 'USD', location: 'Scranton', branchId: 'b1', shiftId: 'sh2' },
+  { id: 'e7', name: 'Jim Halpert', role: 'Marketing Manager', department: 'Marketing', email: 'jim@example.com', status: 'Active', joinDate: '2011-05-20', salary: 8750, paymentFrequency: 'Monthly', currency: 'USD', location: 'Scranton', branchId: 'b1', shiftId: 'sh1' },
+  { id: 'e8', name: 'Stanley Hudson', role: 'Sales Rep', department: 'Sales', email: 'stanley@example.com', status: 'Terminated', joinDate: '2005-02-14', salary: 1800, paymentFrequency: 'Weekly', currency: 'USD', location: 'Chicago', branchId: 'b2', shiftId: 'sh3' },
 ];
 
 export const MOCK_PAYROLL: PayrollRecord[] = [
