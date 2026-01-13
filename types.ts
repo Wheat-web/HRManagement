@@ -120,6 +120,14 @@ export interface Shift {
 
 export type PaymentFrequency = 'Annual' | 'Monthly' | 'Weekly' | 'Daily' | 'Hourly';
 
+export interface EmployeeDocument {
+  id: string;
+  name: string;
+  type: 'PDF' | 'Image' | 'Doc' | 'Other';
+  uploadDate: string;
+  size?: string;
+}
+
 export interface Employee {
   id: string;
   name: string;
@@ -134,6 +142,29 @@ export interface Employee {
   location: string;
   branchId: string; // Link to Branch
   shiftId: string; // Link to Shift
+  
+  // Expanded Fields
+  phone?: string;
+  address?: string;
+  dob?: string;
+  gender?: string;
+  employmentType?: 'Full-time' | 'Part-time' | 'Contract' | 'Intern';
+  managerId?: string;
+  
+  emergencyContact?: {
+    name: string;
+    relation: string;
+    phone: string;
+  };
+  
+  bankDetails?: {
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+    swiftCode?: string;
+  };
+
+  documents?: EmployeeDocument[];
   customAttributes?: Record<string, string>; // Flexible fields
 }
 

@@ -11,6 +11,7 @@ import HROps from './components/HROps';
 import Compliance from './components/Compliance';
 import RecruitmentPlanner from './components/RecruitmentPlanner';
 import OrganizationManagement from './components/OrganizationManagement';
+import EmployeeManagement from './components/EmployeeManagement';
 import Reports from './components/Reports';
 import SalaryManagement from './components/SalaryManagement';
 import PayrollManagement from './components/PayrollManagement';
@@ -320,12 +321,20 @@ function App() {
         return (
           <OrganizationManagement 
             initialDepartments={visibleDepartments} 
-            initialEmployees={visibleEmployees}
             branches={branches}
             selectedBranchId={selectedBranchId}
-            candidates={visibleCandidates} 
-            onAddEmployee={handleAddEmployee}
             onAddDepartment={handleAddDepartment}
+          />
+        );
+      case 'employees':
+        return (
+          <EmployeeManagement 
+            initialEmployees={visibleEmployees}
+            branches={branches}
+            departments={visibleDepartments}
+            candidates={visibleCandidates}
+            onAddEmployee={handleAddEmployee}
+            selectedBranchId={selectedBranchId}
           />
         );
       case 'reports':

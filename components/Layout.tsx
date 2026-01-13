@@ -26,7 +26,8 @@ import {
   Search,
   Globe,
   ChevronDown,
-  PlusCircle
+  PlusCircle,
+  BookUser
 } from 'lucide-react';
 import { Role, UserProfile, Branch } from '../types';
 
@@ -100,6 +101,7 @@ const Layout: React.FC<LayoutProps> = ({
 
     if (user.role === Role.HR_ADMIN || user.role === Role.COMPANY_ADMIN) {
       opsItems.push({ id: 'branches', label: 'Branch Management', icon: <Globe size={20} /> });
+      opsItems.push({ id: 'employees', label: 'Employee Directory', icon: <BookUser size={20} /> });
       opsItems.push({ id: 'shifts', label: 'Shift Management', icon: <Clock size={20} /> });
       opsItems.push({ id: 'attendance', label: 'Attendance', icon: <CalendarCheck size={20} /> });
       opsItems.push({ id: 'messages', label: 'Official Mail', icon: <Mail size={20} />, badge: unreadMessagesCount });
