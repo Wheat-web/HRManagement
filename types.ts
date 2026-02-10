@@ -35,6 +35,7 @@ export interface Branch {
   headCount: number; // Calculated field
   manager: string;
   isHeadquarters?: boolean;
+  isActive: boolean;
 }
 
 export interface JobOpening {
