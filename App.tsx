@@ -317,7 +317,7 @@ function App() {
         return <Compliance logs={auditLogs} />;
       case 'planner':
         return <RecruitmentPlanner />;
-      case 'organization':
+      case 'department':
         return (
           <OrganizationManagement 
             initialDepartments={visibleDepartments} 

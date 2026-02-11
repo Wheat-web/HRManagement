@@ -191,8 +191,8 @@ const Layout: React.FC<LayoutProps> = ({
         icon: <CalendarRange size={20} />,
       });
       opsItems.push({
-        id: "organization",
-        label: "Organization",
+        id: "department",
+        label: "Department",
         icon: <Building2 size={20} />,
       });
       opsItems.push({

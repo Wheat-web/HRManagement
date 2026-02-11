@@ -104,12 +104,13 @@ export interface HROpsRequest {
 }
 
 export interface Department {
-  id: string;
+  id: number;
   name: string;
   manager: string;
   headCount: number;
   location: string;
-  branchId?: string;
+  branchId: number;
+  isActive: boolean;
 }
 
 export interface Shift {

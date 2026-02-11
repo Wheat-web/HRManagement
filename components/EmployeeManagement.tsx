@@ -82,7 +82,7 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterDept]);
-  
+
   const loadEmployees = async () => {
     setLoading(true);
     try {
@@ -117,19 +117,6 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
       setLoading(false);
     }
   };
-
-  // Sync state with props
-  // useEffect(() => {
-  //   if (selectedBranchId === "all") {
-  //     setEmployees(initialEmployees);
-  //   } else {
-  //     setEmployees(
-  //       initialEmployees.filter((e) => e.branchId === selectedBranchId),
-  //     );
-  //   }
-  // }, [initialEmployees, selectedBranchId]);
-
-  // Filtered Display List
 
   const filteredEmployees = employees.filter((e) => {
     const matchesSearch =
@@ -993,8 +980,13 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-400">
-                    Loading employees...
+                  <td colSpan={6} className="p-10 text-center">
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-sm text-slate-500">
+                        Loading Employees...
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : paginatedEmployees.length === 0 ? (
