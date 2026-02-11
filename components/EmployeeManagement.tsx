@@ -190,7 +190,7 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
 
   const handleSave = async () => {
     if (!formData.name?.trim() || !formData.email?.trim()) {
-      showToast("Name and Email Required");
+      showToast("Name and Email Required","error");
       return;
     }
     try {
