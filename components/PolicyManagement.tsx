@@ -43,6 +43,7 @@ const PolicyManagement: React.FC = () => {
       contentSnippet: p.summarySnippet,
       fullContent: p.fullContent,
       lastUpdated: new Date().toISOString().split("T")[0],
+      isActive: p.isActive,
     }));
 
     setPolicies(mappedPolicies);
@@ -60,6 +61,7 @@ const PolicyManagement: React.FC = () => {
       category: "General",
       contentSnippet: "",
       fullContent: "",
+      isActive:true
     });
     setIsEditing(false);
     setIsModalOpen(true);
@@ -83,6 +85,7 @@ const PolicyManagement: React.FC = () => {
           summarySnippet: formData.contentSnippet,
           fullContent: formData.fullContent || formData.contentSnippet,
           lastUpdated: new Date().toISOString().split("T")[0],
+          isActive: formData.isActive,
         };
 
         console.log(payload, "payloaaaaaaad");
@@ -119,6 +122,7 @@ const PolicyManagement: React.FC = () => {
           summarySnippet: formData.contentSnippet,
           fullContent: formData.fullContent || formData.contentSnippet,
           lastUpdated: new Date().toISOString().split("T")[0],
+          isActive: formData.isActive,
         };
 
         const res = await api.post("/policy", payload);
@@ -181,21 +185,47 @@ const PolicyManagement: React.FC = () => {
               <div
                 key={policy.id}
                 onClick={() => setSelectedPolicy(policy)}
-                className={`p-4 rounded-lg cursor-pointer border transition-all ${selectedPolicy?.id === policy.id ? "bg-indigo-50 border-indigo-200 shadow-sm" : "bg-white border-transparent hover:bg-slate-50 hover:border-slate-200"}`}
+                className={`p-4 rounded-lg cursor-pointer border transition-all ${
+                  !policy.isActive ? "opacity-60" : ""
+                } ${
+                  selectedPolicy?.id === policy.id
+                    ? "bg-indigo-50 border-indigo-200 shadow-sm"
+                    : "bg-white border-transparent hover:bg-slate-50 hover:border-slate-200"
+                }`}
               >
                 <div className="flex justify-between items-start mb-1">
                   <h3
-                    className={`font-semibold text-sm ${selectedPolicy?.id === policy.id ? "text-indigo-900" : "text-slate-800"}`}
+                    className={`font-semibold text-sm ${
+                      selectedPolicy?.id === policy.id
+                        ? "text-indigo-900"
+                        : "text-slate-800"
+                    }`}
                   >
                     {policy.title}
                   </h3>
-                  <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">
-                    {policy.category}
-                  </span>
+
+                  {/* Category + Status Badge */}
+                  <div className="flex gap-2">
+                    <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">
+                      {policy.category}
+                    </span>
+
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full ${
+                        policy.isActive
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {policy.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </div>
                 </div>
+
                 <p className="text-xs text-slate-500 line-clamp-2 mb-2">
                   {policy.contentSnippet}
                 </p>
+
                 <div className="flex items-center gap-2 text-[10px] text-slate-400">
                   <Clock size={10} /> Updated {policy.lastUpdated}
                 </div>
@@ -293,6 +323,40 @@ const PolicyManagement: React.FC = () => {
                   <option>IT & Security</option>
                   <option>HR</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
+                  Status
+                </label>
+
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, isActive: true })}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${
+                      formData.isActive
+                        ? "bg-green-100 text-green-700 border-green-300"
+                        : "bg-white text-slate-500 border-slate-300"
+                    }`}
+                  >
+                    Active
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({ ...formData, isActive: false })
+                    }
+                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${
+                      !formData.isActive
+                        ? "bg-red-100 text-red-700 border-red-300"
+                        : "bg-white text-slate-500 border-slate-300"
+                    }`}
+                  >
+                    Inactive
+                  </button>
+                </div>
               </div>
 
               <div>

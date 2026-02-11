@@ -84,6 +84,7 @@ export interface PolicyDocument {
   lastUpdated: string;
   contentSnippet: string;
   fullContent?: string; // Added for detail view
+  isActive:boolean;
 }
 
 export interface HROpsRequest {
