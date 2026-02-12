@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 import api from "@/services/api";
+import { DepartmentCombo, getDepartmentCombo } from "@/services/departmentService";
 
 interface EmployeeManagementProps {
   // initialEmployees: Employee[];
@@ -48,7 +49,7 @@ interface EmployeeManagementProps {
 const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
   // initialEmployees,
   branches,
-  departments,
+  // departments,
   candidates = [],
   onAddEmployee,
   selectedBranchId = "all",
@@ -58,6 +59,7 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDept, setFilterDept] = useState("All");
   const [loading, setLoading] = useState(true);
+  const [departments, setDepartments] = useState<DepartmentCombo[]>([]);
 
   // Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -77,11 +79,25 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
 
   useEffect(() => {
     loadEmployees();
+    loadDepartments();
   }, []);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterDept]);
+
+  const loadDepartments = async () => {
+    try {
+      const data = await getDepartmentCombo();
+      console.log(
+        data,
+        "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+      );
+      setDepartments(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const loadEmployees = async () => {
     setLoading(true);
@@ -190,7 +206,7 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
 
   const handleSave = async () => {
     if (!formData.name?.trim() || !formData.email?.trim()) {
-      showToast("Name and Email Required","error");
+      showToast("Name and Email Required", "error");
       return;
     }
     try {
