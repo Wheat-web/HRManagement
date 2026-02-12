@@ -75,10 +75,6 @@ const Layout: React.FC<LayoutProps> = ({
   const loadBranches = async () => {
     try {
       const data = await getBranchCombo();
-      console.log(
-        data,
-        "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
-      );
       setBranches(data);
     } catch (err) {
       console.error(err);
@@ -296,7 +292,7 @@ const Layout: React.FC<LayoutProps> = ({
 
           <div className="flex items-center gap-3 px-2 py-2 bg-slate-800 rounded-lg mb-2">
             <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-xs font-bold">
-              {user.name.charAt(0)}
+              {user?.name?.charAt(0) || "U"}
             </div>
             <div className="overflow-hidden">
               <p className="text-sm font-bold text-white truncate">

@@ -12,6 +12,7 @@ import {
 import { UserProfile, Role } from "../types";
 import api from "../services/api";
 import { useToast } from "../context/ToastContext";
+import { jwtDecode } from "jwt-decode";
 
 interface LoginProps {
   onLogin: (user: UserProfile) => void;
@@ -39,14 +40,16 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup }) => {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
 
-      const user: UserProfile = {
-        id: "u1",
-        name: email.split("@")[0],
-        email,
-        role: Role.COMPANY_ADMIN,
+      const decoded: any = jwtDecode(accessToken);
+
+      const user = {
+        id: decoded.id,
+        name: decoded.name,
+        email: decoded.email,
+        role: decoded.role,
       };
 
-      onLogin(user);
+      onLogin(user)
     } catch (err) {
       showToast("Credentials Invalid", "error");
     } finally {
