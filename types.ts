@@ -21,9 +21,9 @@ export interface UserProfile {
   name: string;
   email: string;
   role: Role;
-  companyName: string;
-  avatarUrl?: string;
-  branchId?: string; // If user is restricted to a branch
+  // companyName: string;
+  // avatarUrl?: string;
+  // branchId?: string; // If user is restricted to a branch
 }
 
 export interface Branch {
