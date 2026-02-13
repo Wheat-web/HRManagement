@@ -6,7 +6,6 @@ export interface DepartmentCombo {
 }
 
 export const getDepartmentCombo = async (): Promise<DepartmentCombo[]> => {
-  const res = await api.get("/DepartmentCombo");
-  console.log(res,"resssssssssssssssssss");
+  const res = await api.get("/Department/combo");
   return res.data;
 };

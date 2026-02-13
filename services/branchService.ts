@@ -6,6 +6,6 @@ export interface BranchCombo {
 }
 
 export const getBranchCombo = async (): Promise<BranchCombo[]> => {
-  const res = await api.get("/BranchCombo");
+  const res = await api.get("/Branch/combo");
   return res.data;
 };

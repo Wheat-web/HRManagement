@@ -1,40 +1,86 @@
-
-import React, { useState } from 'react';
-import { Candidate, CandidateStage, JobOpening } from '../types';
-import { MoreHorizontal, Star, AlertCircle, CheckCircle2, Upload, Plus, UserPlus, Briefcase, Filter, X } from 'lucide-react';
-import { useToast } from '../context/ToastContext';
+import React, { useState, useEffect } from "react";
+import { Candidate, CandidateStage, JobOpening } from "../types";
+import {
+  MoreHorizontal,
+  Star,
+  AlertCircle,
+  CheckCircle2,
+  Upload,
+  Plus,
+  UserPlus,
+  Briefcase,
+  Filter,
+  X,
+} from "lucide-react";
+import { useToast } from "../context/ToastContext";
+import api from "@/services/api";
 
 interface RecruitmentBoardProps {
-  candidates: Candidate[];
+//   candidates: Candidate[];
   jobs: JobOpening[];
-  onSelectCandidate: (c: Candidate) => void;
-  onUpdateStage: (c: Candidate, stage: CandidateStage) => void;
+//   onSelectCandidate: (c: Candidate) => void;
+//   onUpdateStage: (c: Candidate, stage: CandidateStage) => void;
   onUploadResume: () => void;
-  onAddJob: (job: JobOpening) => void;
+  //   onAddJob: (job: JobOpening) => void;
 }
 
 const STAGES = Object.values(CandidateStage);
 
-const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({ candidates, jobs, onSelectCandidate, onUpdateStage, onUploadResume, onAddJob }) => {
+const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
+  candidates,
+  //   jobs,
+  onSelectCandidate,
+  onUpdateStage,
+  onUploadResume,
+  //   onAddJob,
+}) => {
   const { showToast } = useToast();
   const [draggedCandidate, setDraggedCandidate] = useState<string | null>(null);
-  const [selectedJobId, setSelectedJobId] = useState<string>('all');
+  const [selectedJobId, setSelectedJobId] = useState<number>("all");
   const [isAddJobModalOpen, setIsAddJobModalOpen] = useState(false);
-  
-  // New Job Form State
+  const [jobs, setJobs] = useState<JobOpening[]>([]);
+
+  useEffect(() => {
+    loadJobs();
+  }, []);
+
+  const loadJobs = async () => {
+    try {
+      const data = await getJobOpenings();
+
+      console.log(data,"dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+      
+      setJobs(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const [newJob, setNewJob] = useState<Partial<JobOpening>>({
-    title: '',
-    department: 'Engineering',
-    location: 'Remote',
-    type: 'Full-time'
+    title: "",
+    department: "Engineering",
+    location: "Remote",
+    type: "Full-time",
   });
 
-  // Filter candidates based on selected job
-  const filteredCandidates = selectedJobId === 'all' 
-    ? candidates 
-    : candidates.filter(c => c.jobId === selectedJobId);
+  const filteredCandidates =
+    selectedJobId === "all"
+      ? candidates
+      : candidates.filter((c) => c.jobId === selectedJobId);
 
-  const selectedJob = jobs.find(j => j.id === selectedJobId);
+  const selectedJob = jobs.find((j) => j.id === selectedJobId);
+
+  const getJobOpenings = async () => {
+    const res = await api.get("/JobOpening");
+    return res.data;
+  };
+
+  const createJobOpening = async (job: any) => {
+    const res = await api.post("/JobOpening", job);
+    console.log(res,"resssssssssssssssssssssssssssssssssssssssssssssssssss");
+    
+    return res.data;
+  };
 
   const handleDragStart = (e: React.DragEvent, candidateId: string) => {
     setDraggedCandidate(candidateId);
@@ -43,7 +89,7 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({ candidates, jobs, o
   const handleDrop = (e: React.DragEvent, stage: CandidateStage) => {
     e.preventDefault();
     if (draggedCandidate) {
-      const candidate = candidates.find(c => c.id === draggedCandidate);
+      const candidate = candidates.find((c) => c.id === draggedCandidate);
       if (candidate && candidate.stage !== stage) {
         onUpdateStage(candidate, stage);
       }
@@ -55,136 +101,165 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({ candidates, jobs, o
     e.preventDefault();
   };
 
-  const handleCreateJob = () => {
+  const handleCreateJob = async () => {
     if (!newJob.title) {
-        showToast('Job title is required', 'warning');
-        return;
+      showToast("Job title is required", "warning");
+      return;
     }
 
-    const job: JobOpening = {
-        id: `j${Date.now()}`,
-        title: newJob.title!,
-        department: newJob.department || 'General',
-        location: newJob.location || 'Remote',
-        type: newJob.type as any || 'Full-time',
-        status: 'Open',
-        postedDate: new Date().toISOString().split('T')[0]
-    };
+    try {
+      await createJobOpening({
+        title: newJob.title,
+        departmentID: 1,
+        location: newJob.location,
+        branchId: 1,
+        type: newJob.type,
+        status: "Open",
+        hiringManager: "Admin",
+      });
 
-    onAddJob(job);
-    setIsAddJobModalOpen(false);
-    setNewJob({ title: '', department: 'Engineering', location: 'Remote', type: 'Full-time' });
-    showToast('Job opening created successfully', 'success');
+      await loadJobs(); 
+
+      setIsAddJobModalOpen(false);
+      setNewJob({
+        title: "",
+        department: "Engineering",
+        location: "Remote",
+        type: "Full-time",
+      });
+
+      showToast("Job opening created successfully", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to create job", "error");
+    }
   };
 
   const getMatchColor = (score?: number) => {
-    if (!score) return 'bg-slate-100 text-slate-500';
-    if (score >= 80) return 'bg-emerald-100 text-emerald-700';
-    if (score >= 60) return 'bg-amber-100 text-amber-700';
-    return 'bg-red-100 text-red-700';
+    if (!score) return "bg-slate-100 text-slate-500";
+    if (score >= 80) return "bg-emerald-100 text-emerald-700";
+    if (score >= 60) return "bg-amber-100 text-amber-700";
+    return "bg-red-100 text-red-700";
   };
 
   return (
     <div className="h-full flex gap-6">
-      
       {/* Sidebar: Job Openings List */}
       <div className="w-64 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
-         <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-            <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-               <Briefcase size={16} /> Job Openings
-            </h3>
-            <button 
-               onClick={() => setIsAddJobModalOpen(true)}
-               className="text-indigo-600 hover:bg-indigo-50 p-1 rounded"
-               title="Add Job"
-            >
-               <Plus size={16} />
-            </button>
-         </div>
-         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-            <button 
-               onClick={() => setSelectedJobId('all')}
-               className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium flex justify-between items-center transition-colors ${
-                  selectedJobId === 'all' 
-                  ? 'bg-indigo-50 text-indigo-700' 
-                  : 'text-slate-600 hover:bg-slate-50'
-               }`}
-            >
-               All Jobs
-               <span className="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full text-xs">{candidates.length}</span>
-            </button>
-            
-            {jobs.map(job => {
-                const count = candidates.filter(c => c.jobId === job.id).length;
-                return (
-                    <button 
-                       key={job.id}
-                       onClick={() => setSelectedJobId(job.id)}
-                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors group ${
-                          selectedJobId === job.id 
-                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' 
-                          : 'text-slate-600 hover:bg-slate-50 border border-transparent'
-                       }`}
-                    >
-                       <div className="flex justify-between items-start mb-1">
-                          <span className="font-medium truncate pr-2">{job.title}</span>
-                          <span className={`px-1.5 py-0.5 rounded-full text-xs ${selectedJobId === job.id ? 'bg-indigo-200 text-indigo-800' : 'bg-slate-200 text-slate-600'}`}>{count}</span>
-                       </div>
-                       <div className="text-xs opacity-70 flex justify-between">
-                          <span>{job.department}</span>
-                          <span className={`${job.status === 'Open' ? 'text-emerald-600' : 'text-slate-400'}`}>{job.status}</span>
-                       </div>
-                    </button>
-                );
-            })}
-         </div>
+        <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+          <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+            <Briefcase size={16} /> Job Openings
+          </h3>
+          <button
+            onClick={() => setIsAddJobModalOpen(true)}
+            className="text-indigo-600 hover:bg-indigo-50 p-1 rounded"
+            title="Add Job"
+          >
+            <Plus size={16} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          <button
+            onClick={() => setSelectedJobId("all")}
+            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium flex justify-between items-center transition-colors ${
+              selectedJobId === "all"
+                ? "bg-indigo-50 text-indigo-700"
+                : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            All Jobs
+            <span className="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full text-xs">
+              {candidates.length}
+            </span>
+          </button>
+
+          {jobs.map((job) => {
+            const count = candidates.filter((c) => c.jobId === job.id).length;
+            return (
+              <button
+                key={job.id}
+                onClick={() => setSelectedJobId(job.id)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors group ${
+                  selectedJobId === job.id
+                    ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                    : "text-slate-600 hover:bg-slate-50 border border-transparent"
+                }`}
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <span className="font-medium truncate pr-2">{job.title}</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-xs ${selectedJobId === job.id ? "bg-indigo-200 text-indigo-800" : "bg-slate-200 text-slate-600"}`}
+                  >
+                    {count}
+                  </span>
+                </div>
+                <div className="text-xs opacity-70 flex justify-between">
+                  <span>{job.department}</span>
+                  <span
+                    className={`${job.status === "Open" ? "text-emerald-600" : "text-slate-400"}`}
+                  >
+                    {job.status}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Main Board Area */}
       <div className="flex-1 flex flex-col h-full min-w-0">
         <div className="mb-4 flex justify-between items-center px-1">
-            <div>
-              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                 {selectedJobId === 'all' ? 'All Active Pipelines' : selectedJob?.title}
-                 {selectedJobId !== 'all' && (
-                    <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">
-                       {selectedJob?.location} • {selectedJob?.type}
-                    </span>
-                 )}
-              </h2>
-              <p className="text-sm text-slate-500">
-                 {filteredCandidates.length} active candidates in pipeline
-              </p>
-            </div>
-            <div className="flex gap-3">
-               <button className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-50 text-sm font-medium">
-                  <Filter size={16} /> Filter
-               </button>
-               <button 
-                  onClick={onUploadResume}
-                  className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm transition-colors text-sm font-medium"
-               >
-                  <UserPlus size={16} />
-                  Add Candidate
-               </button>
-            </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              {selectedJobId === "all"
+                ? "All Active Pipelines"
+                : selectedJob?.title}
+              {selectedJobId !== "all" && (
+                <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">
+                  {selectedJob?.location} • {selectedJob?.type}
+                </span>
+              )}
+            </h2>
+            <p className="text-sm text-slate-500">
+              {filteredCandidates.length} active candidates in pipeline
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-50 text-sm font-medium">
+              <Filter size={16} /> Filter
+            </button>
+            <button
+              onClick={onUploadResume}
+              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm transition-colors text-sm font-medium"
+            >
+              <UserPlus size={16} />
+              Add Candidate
+            </button>
+          </div>
         </div>
-      
+
         <div className="flex-1 flex overflow-x-auto pb-4 gap-6">
           {STAGES.map((stage) => {
-            const stageCandidates = filteredCandidates.filter(c => c.stage === stage);
-            
+            const stageCandidates = filteredCandidates.filter(
+              (c) => c.stage === stage,
+            );
+
             return (
-              <div 
-                key={stage} 
+              <div
+                key={stage}
                 className="flex-shrink-0 w-80 flex flex-col bg-slate-100 rounded-xl max-h-full border border-slate-200/60"
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, stage)}
               >
                 <div className="p-4 flex justify-between items-center border-b border-slate-200 bg-slate-100 rounded-t-xl sticky top-0 z-10">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-700 text-sm uppercase tracking-wide">{stage}</span>
-                    <span className="bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-full text-xs font-bold">{stageCandidates.length}</span>
+                    <span className="font-semibold text-slate-700 text-sm uppercase tracking-wide">
+                      {stage}
+                    </span>
+                    <span className="bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                      {stageCandidates.length}
+                    </span>
                   </div>
                   <button className="text-slate-400 hover:text-slate-600">
                     <MoreHorizontal size={16} />
@@ -193,7 +268,7 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({ candidates, jobs, o
 
                 <div className="flex-1 p-3 overflow-y-auto custom-scrollbar space-y-3">
                   {stageCandidates.map((candidate) => (
-                    <div 
+                    <div
                       key={candidate.id}
                       draggable
                       onDragStart={(e) => handleDragStart(e, candidate.id)}
@@ -208,31 +283,47 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({ candidates, jobs, o
                       )}
 
                       <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-bold text-slate-800">{candidate.name}</h4>
+                        <h4 className="font-bold text-slate-800">
+                          {candidate.name}
+                        </h4>
                         {candidate.matchScore && (
-                          <span className={`text-xs font-bold px-2 py-1 rounded-md ${getMatchColor(candidate.matchScore)}`}>
+                          <span
+                            className={`text-xs font-bold px-2 py-1 rounded-md ${getMatchColor(candidate.matchScore)}`}
+                          >
                             {candidate.matchScore}%
                           </span>
                         )}
                       </div>
-                      
-                      <p className="text-xs text-slate-500 mb-3 font-medium">{candidate.role}</p>
-                      
+
+                      <p className="text-xs text-slate-500 mb-3 font-medium">
+                        {candidate.role}
+                      </p>
+
                       <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
-                        <span className="bg-slate-50 px-1.5 py-0.5 rounded">{candidate.experience}y exp</span>
-                        <span className="bg-slate-50 px-1.5 py-0.5 rounded truncate max-w-[120px]">{candidate.skills.slice(0, 2).join(', ')}</span>
+                        <span className="bg-slate-50 px-1.5 py-0.5 rounded">
+                          {candidate.experience}y exp
+                        </span>
+                        <span className="bg-slate-50 px-1.5 py-0.5 rounded truncate max-w-[120px]">
+                          {candidate.skills.slice(0, 2).join(", ")}
+                        </span>
                       </div>
 
-                      {candidate.aiReasoning && stage === CandidateStage.SCREENING && (
-                        <div className="bg-indigo-50 p-2 rounded text-xs text-indigo-800 mb-3 border border-indigo-100 line-clamp-2 italic">
-                          "{candidate.aiReasoning}"
-                        </div>
-                      )}
+                      {candidate.aiReasoning &&
+                        stage === CandidateStage.SCREENING && (
+                          <div className="bg-indigo-50 p-2 rounded text-xs text-indigo-800 mb-3 border border-indigo-100 line-clamp-2 italic">
+                            "{candidate.aiReasoning}"
+                          </div>
+                        )}
 
                       <div className="flex justify-between items-center mt-2 border-t border-slate-50 pt-2">
-                        <span className="text-[10px] text-slate-400 font-medium">{candidate.appliedDate}</span>
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          {candidate.appliedDate}
+                        </span>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                           <MoreHorizontal size={14} className="text-slate-400" />
+                          <MoreHorizontal
+                            size={14}
+                            className="text-slate-400"
+                          />
                         </div>
                       </div>
                     </div>
@@ -246,68 +337,101 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({ candidates, jobs, o
 
       {/* Create Job Modal */}
       {isAddJobModalOpen && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
-               <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                  <h3 className="font-bold text-slate-800">Create New Job Opening</h3>
-                  <button onClick={() => setIsAddJobModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
-               </div>
-               <div className="p-6 space-y-4">
-                  <div>
-                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Job Title</label>
-                     <input 
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
-                        placeholder="e.g. Senior Backend Engineer"
-                        value={newJob.title}
-                        onChange={(e) => setNewJob({...newJob, title: e.target.value})}
-                     />
-                  </div>
-                  <div>
-                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Department</label>
-                     <select 
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
-                        value={newJob.department}
-                        onChange={(e) => setNewJob({...newJob, department: e.target.value})}
-                     >
-                        <option>Engineering</option>
-                        <option>Product</option>
-                        <option>Design</option>
-                        <option>Marketing</option>
-                        <option>Sales</option>
-                        <option>HR</option>
-                     </select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Location</label>
-                        <input 
-                           className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
-                           placeholder="e.g. Remote"
-                           value={newJob.location}
-                           onChange={(e) => setNewJob({...newJob, location: e.target.value})}
-                        />
-                     </div>
-                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label>
-                        <select 
-                           className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
-                           value={newJob.type}
-                           onChange={(e) => setNewJob({...newJob, type: e.target.value as any})}
-                        >
-                           <option>Full-time</option>
-                           <option>Contract</option>
-                           <option>Part-time</option>
-                           <option>Internship</option>
-                        </select>
-                     </div>
-                  </div>
-               </div>
-               <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
-                  <button onClick={() => setIsAddJobModalOpen(false)} className="px-4 py-2 text-slate-600 hover:text-slate-800 text-sm font-medium">Cancel</button>
-                  <button onClick={handleCreateJob} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium">Create Job</button>
-               </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h3 className="font-bold text-slate-800">
+                Create New Job Opening
+              </h3>
+              <button
+                onClick={() => setIsAddJobModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X size={20} />
+              </button>
             </div>
-         </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                  Job Title
+                </label>
+                <input
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                  placeholder="e.g. Senior Backend Engineer"
+                  value={newJob.title}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, title: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                  Department
+                </label>
+                <select
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+                  value={newJob.department}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, department: e.target.value })
+                  }
+                >
+                  <option>Engineering</option>
+                  <option>Product</option>
+                  <option>Design</option>
+                  <option>Marketing</option>
+                  <option>Sales</option>
+                  <option>HR</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                    Location
+                  </label>
+                  <input
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                    placeholder="e.g. Remote"
+                    value={newJob.location}
+                    onChange={(e) =>
+                      setNewJob({ ...newJob, location: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                    Type
+                  </label>
+                  <select
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+                    value={newJob.type}
+                    onChange={(e) =>
+                      setNewJob({ ...newJob, type: e.target.value as any })
+                    }
+                  >
+                    <option>Full-time</option>
+                    <option>Contract</option>
+                    <option>Part-time</option>
+                    <option>Internship</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+              <button
+                onClick={() => setIsAddJobModalOpen(false)}
+                className="px-4 py-2 text-slate-600 hover:text-slate-800 text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateJob}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
+              >
+                Create Job
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

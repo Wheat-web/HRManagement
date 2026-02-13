@@ -82,7 +82,6 @@ const Layout: React.FC<LayoutProps> = ({
   };
 
   const getMenuItems = (): MenuItem[] => {
-    // Candidate Specific Menu
     if (user.role === Role.CANDIDATE) {
       return [
         { id: "jobs", label: "Job Board", icon: <Briefcase size={20} /> },

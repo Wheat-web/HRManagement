@@ -10,7 +10,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { UserProfile, Role } from "../types";
-import api from "../services/api";
+import api, { startRefreshTimer } from "../services/api";
 import { useToast } from "../context/ToastContext";
 import { jwtDecode } from "jwt-decode";
 
@@ -41,6 +41,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup }) => {
       localStorage.setItem("refreshToken", refreshToken);
 
       const decoded: any = jwtDecode(accessToken);
+      const expiryTime = decoded.exp * 1000;
+
+      localStorage.setItem("tokenExpiry", expiryTime.toString());
 
       const user = {
         id: decoded.id,
@@ -49,7 +52,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup }) => {
         role: decoded.role,
       };
 
-      onLogin(user)
+      onLogin(user);
+
+      console.log(user,"userrrrrrrrrrrr");
+      
+      startRefreshTimer();
     } catch (err) {
       showToast("Credentials Invalid", "error");
     } finally {
