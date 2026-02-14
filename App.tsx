@@ -84,21 +84,13 @@ function App() {
       try {
         const decoded: any = jwtDecode(token);
 
-        // ✅ Check token expiry
-        if (decoded.exp * 1000 < Date.now()) {
-          localStorage.clear();
-          setUser(null);
-          return;
-        }
-
         setUser({
           id: decoded.id,
-          name: decoded.name, 
+          name: decoded.name,
           email: decoded.email,
           role: decoded.role,
         });
-      } catch (error) {
-        localStorage.clear();
+      } catch {
         setUser(null);
       }
     }

@@ -7,14 +7,9 @@ const api = axios.create({
 
 const refreshAuthToken = async () => {
   try {
-
-    console.log("Heyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
     
     const refreshToken = localStorage.getItem("refreshToken");
-
-    console.log(refreshToken,"refreshhhhhhhhhhhhhhh");
     
-
     const response = await axios.post(
       "https://localhost:7256/api/Auth/refresh",
       { refreshToken },
@@ -32,7 +27,7 @@ const refreshAuthToken = async () => {
     return accessToken;
   } catch (error) {
     console.log("Refresh token failed");
-    localStorage.clear();
+    // localStorage.clear();
   }
 };
 

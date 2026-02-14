@@ -39,9 +39,9 @@ export interface Branch {
 }
 
 export interface JobOpening {
-  id: string;
+  id: number;
   title: string;
-  department: string;
+  department: number;
   location: string;
   branchId?: string;
   type: 'Full-time' | 'Contract' | 'Part-time' | 'Internship';

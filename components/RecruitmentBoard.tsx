@@ -11,15 +11,20 @@ import {
   Briefcase,
   Filter,
   X,
+  Edit2,
 } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 import api from "@/services/api";
+import {
+  DepartmentCombo,
+  getDepartmentCombo,
+} from "@/services/departmentService";
 
 interface RecruitmentBoardProps {
-//   candidates: Candidate[];
-  jobs: JobOpening[];
-//   onSelectCandidate: (c: Candidate) => void;
-//   onUpdateStage: (c: Candidate, stage: CandidateStage) => void;
+  //   candidates: Candidate[];
+  //   jobs: JobOpening[];
+  //   onSelectCandidate: (c: Candidate) => void;
+  //   onUpdateStage: (c: Candidate, stage: CandidateStage) => void;
   onUploadResume: () => void;
   //   onAddJob: (job: JobOpening) => void;
 }
@@ -36,29 +41,41 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
 }) => {
   const { showToast } = useToast();
   const [draggedCandidate, setDraggedCandidate] = useState<string | null>(null);
-  const [selectedJobId, setSelectedJobId] = useState<number>("all");
+  const [selectedJobId, setSelectedJobId] = useState<number | "all">("all");
   const [isAddJobModalOpen, setIsAddJobModalOpen] = useState(false);
-  const [jobs, setJobs] = useState<JobOpening[]>([]);
+  const [jobs, setJobs] = useState<[]>([]);
+  const [departments, setDepartments] = useState<DepartmentCombo[]>([]);
+  const [editingJobId, setEditingJobId] = useState<number | null>(null);
 
   useEffect(() => {
     loadJobs();
+    loadDepartments();
   }, []);
 
   const loadJobs = async () => {
     try {
       const data = await getJobOpenings();
 
-      console.log(data,"dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-      
+      console.log(data, "dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
       setJobs(data);
     } catch (err) {
       console.error(err);
     }
   };
 
+  const loadDepartments = async () => {
+    try {
+      const data = await getDepartmentCombo();
+      setDepartments(data);
+    } catch (error) {
+      console.error("Failed to load departments", error);
+    }
+  };
+
   const [newJob, setNewJob] = useState<Partial<JobOpening>>({
     title: "",
-    department: "Engineering",
+    department: 0,
     location: "Remote",
     type: "Full-time",
   });
@@ -77,9 +94,75 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
 
   const createJobOpening = async (job: any) => {
     const res = await api.post("/JobOpening", job);
-    console.log(res,"resssssssssssssssssssssssssssssssssssssssssssssssssss");
-    
     return res.data;
+  };
+
+  const updateJobOpening = async (id: number, job: any) => {
+    const res = await api.put(`/JobOpening/${id}`, job);
+    return res.data;
+  };
+
+  const handleCreateJob = async () => {
+    if (!newJob.title) {
+      showToast("Job title is required", "warning");
+      return;
+    }
+
+    try {
+      if (editingJobId) {
+        await updateJobOpening(editingJobId, {
+          title: newJob.title,
+          departmentID: newJob.department,
+          location: newJob.location,
+          branchId: 1,
+          type: newJob.type,
+          status: "Open",
+          hiringManager: "Admin",
+        });
+
+        showToast("Job updated successfully", "success");
+      } else {
+        await createJobOpening({
+          title: newJob.title,
+          departmentID: newJob.department,
+          location: newJob.location,
+          branchId: 1,
+          type: newJob.type,
+          status: "Open",
+          hiringManager: "Admin",
+        });
+
+        showToast("Job created successfully", "success");
+      }
+
+      await loadJobs();
+
+      setEditingJobId(null);
+      setIsAddJobModalOpen(false);
+
+      setNewJob({
+        title: "",
+        department: 0,
+        location: "Remote",
+        type: "Full-time",
+      });
+    } catch (err) {
+      console.error(err);
+      showToast("Operation failed", "error");
+    }
+  };
+
+  const handleOpenEdit = (job: any) => {
+    setEditingJobId(job.id);
+
+    setNewJob({
+      title: job.title,
+      department: job.departmentID,
+      location: job.location,
+      type: job.type,
+    });
+
+    setIsAddJobModalOpen(true);
   };
 
   const handleDragStart = (e: React.DragEvent, candidateId: string) => {
@@ -101,40 +184,6 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
     e.preventDefault();
   };
 
-  const handleCreateJob = async () => {
-    if (!newJob.title) {
-      showToast("Job title is required", "warning");
-      return;
-    }
-
-    try {
-      await createJobOpening({
-        title: newJob.title,
-        departmentID: 1,
-        location: newJob.location,
-        branchId: 1,
-        type: newJob.type,
-        status: "Open",
-        hiringManager: "Admin",
-      });
-
-      await loadJobs(); 
-
-      setIsAddJobModalOpen(false);
-      setNewJob({
-        title: "",
-        department: "Engineering",
-        location: "Remote",
-        type: "Full-time",
-      });
-
-      showToast("Job opening created successfully", "success");
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to create job", "error");
-    }
-  };
-
   const getMatchColor = (score?: number) => {
     if (!score) return "bg-slate-100 text-slate-500";
     if (score >= 80) return "bg-emerald-100 text-emerald-700";
@@ -151,7 +200,16 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
             <Briefcase size={16} /> Job Openings
           </h3>
           <button
-            onClick={() => setIsAddJobModalOpen(true)}
+            onClick={() => {
+              setIsAddJobModalOpen(true);
+              setEditingJobId(null);
+              setNewJob({
+                title: "",
+                department: 0,
+                location: "Remote",
+                type: "Full-time",
+              });
+            }}
             className="text-indigo-600 hover:bg-indigo-50 p-1 rounded"
             title="Add Job"
           >
@@ -176,10 +234,10 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
           {jobs.map((job) => {
             const count = candidates.filter((c) => c.jobId === job.id).length;
             return (
-              <button
+              <div
                 key={job.id}
                 onClick={() => setSelectedJobId(job.id)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors group ${
+                className={`w-full cursor-pointer text-left px-3 py-2 rounded-lg text-sm transition-colors group ${
                   selectedJobId === job.id
                     ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
                     : "text-slate-600 hover:bg-slate-50 border border-transparent"
@@ -187,21 +245,42 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
               >
                 <div className="flex justify-between items-start mb-1">
                   <span className="font-medium truncate pr-2">{job.title}</span>
-                  <span
-                    className={`px-1.5 py-0.5 rounded-full text-xs ${selectedJobId === job.id ? "bg-indigo-200 text-indigo-800" : "bg-slate-200 text-slate-600"}`}
-                  >
-                    {count}
-                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenEdit(job);
+                      }}
+                      className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+
+                    <span
+                      className={`px-1.5 py-0.5 rounded-full text-xs ${
+                        selectedJobId === job.id
+                          ? "bg-indigo-200 text-indigo-800"
+                          : "bg-slate-200 text-slate-600"
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </div>
                 </div>
+
                 <div className="text-xs opacity-70 flex justify-between">
-                  <span>{job.department}</span>
+                  <span>
+                    {departments.find((d) => d.id === job.departmentID)?.name ||
+                      "N/A"}
+                  </span>
                   <span
                     className={`${job.status === "Open" ? "text-emerald-600" : "text-slate-400"}`}
                   >
                     {job.status}
                   </span>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -341,8 +420,9 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
           <div className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
             <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <h3 className="font-bold text-slate-800">
-                Create New Job Opening
+                {editingJobId ? "Edit Job Opening" : "Create New Job Opening"}
               </h3>
+
               <button
                 onClick={() => setIsAddJobModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600"
@@ -368,21 +448,24 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                   Department
                 </label>
+
                 <select
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
                   value={newJob.department}
                   onChange={(e) =>
-                    setNewJob({ ...newJob, department: e.target.value })
+                    setNewJob({ ...newJob, department: Number(e.target.value) })
                   }
                 >
-                  <option>Engineering</option>
-                  <option>Product</option>
-                  <option>Design</option>
-                  <option>Marketing</option>
-                  <option>Sales</option>
-                  <option>HR</option>
+                  <option value="">Select Department</option>
+
+                  {departments.map((dept) => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
@@ -418,7 +501,10 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
             </div>
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
               <button
-                onClick={() => setIsAddJobModalOpen(false)}
+                onClick={() => {
+                  setIsAddJobModalOpen(false);
+                  setEditingJobId(null);
+                }}
                 className="px-4 py-2 text-slate-600 hover:text-slate-800 text-sm font-medium"
               >
                 Cancel
@@ -427,7 +513,7 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
                 onClick={handleCreateJob}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
               >
-                Create Job
+                {editingJobId ? "Update Job" : "Create Job"}
               </button>
             </div>
           </div>
