@@ -78,6 +78,7 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
     department: 0,
     location: "Remote",
     type: "Full-time",
+    status: "Open",
   });
 
   const filteredCandidates =
@@ -116,7 +117,7 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
           location: newJob.location,
           branchId: 1,
           type: newJob.type,
-          status: "Open",
+          status: newJob.status ?? "Open",
           hiringManager: "Admin",
         });
 
@@ -160,6 +161,7 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
       department: job.departmentID,
       location: job.location,
       type: job.type,
+      status: job.status,
     });
 
     setIsAddJobModalOpen(true);
@@ -497,6 +499,41 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
                     <option>Internship</option>
                   </select>
                 </div>
+                {editingJobId && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
+                      Status
+                    </label>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setNewJob({ ...newJob, status: "Open" })}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                          newJob.status === "Open"
+                            ? "bg-emerald-100 text-emerald-700 border-emerald-300"
+                            : "bg-white text-slate-500 border-slate-300"
+                        }`}
+                      >
+                        Open
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setNewJob({ ...newJob, status: "Closed" })
+                        }
+                        className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                          newJob.status === "Closed"
+                            ? "bg-red-100 text-red-700 border-red-300"
+                            : "bg-white text-slate-500 border-slate-300"
+                        }`}
+                      >
+                        Closed
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
