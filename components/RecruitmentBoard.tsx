@@ -28,9 +28,10 @@ import {
 interface RecruitmentBoardProps {
   //   candidates: Candidate[];
   //   jobs: JobOpening[];
-  //   onSelectCandidate: (c: Candidate) => void;
+  onSelectCandidate: (c: Candidate) => void;
   //   onUpdateStage: (c: Candidate, stage: CandidateStage) => void;
   onUploadResume: () => void;
+  reloadTrigger: boolean;
   //   onAddJob: (job: JobOpening) => void;
 }
 
@@ -42,10 +43,11 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
   onSelectCandidate,
   // onUpdateStage,
   onUploadResume,
+  reloadTrigger
   //   onAddJob,
 }) => {
   const { showToast } = useToast();
-  const [draggedCandidate, setDraggedCandidate] = useState<string | null>(null);
+  const [draggedCandidate, setDraggedCandidate] = useState<number | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<number | "all">("all");
   const [isAddJobModalOpen, setIsAddJobModalOpen] = useState(false);
   const [jobs, setJobs] = useState<[]>([]);
@@ -65,24 +67,26 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
     } else {
       loadCandidatesByJob(selectedJobId);
     }
-  }, [selectedJobId]);
+  }, [selectedJobId,reloadTrigger]);
 
   const loadCandidatesByJob = async (jobId: number) => {
     try {
       const data = await getCandidatesByJob(jobId);
 
-      console.log(data,"dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-      
-
       const mapped = data.map((c: any) => ({
         id: c.candidateId,
+        jobId: c.jobOpeningId,
+
         name: c.fullName,
         role: c.targetRole || "N/A",
+        email: c.email,
         experience: c.experienceYears || 0,
+        resumeSummary: c.professionalSummary || "",
         skills: c.skills ? c.skills.split(",") : [],
         stage: mapStageIdToEnum(c.stageId),
-        jobId: c.jobOpeningId,
         appliedDate: new Date(c.createdAt).toLocaleDateString(),
+        matchScore: c.matchScore,
+        aiReasoning: c.aiReasoning,
       }));
 
       setCandidates(mapped);
@@ -94,9 +98,6 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
   const loadJobs = async () => {
     try {
       const data = await getJobOpenings();
-
-      console.log(data, "dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-
       setJobs(data);
     } catch (err) {
       console.error(err);
@@ -173,13 +174,6 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
   ) => {
     try {
       const stageId = mapEnumToStageId(newStage);
-
-      console.log(stageId,"stageiddd");
-      
-      console.log(candidate.id,"scandidateddd");
-
-      
-
       await updateCandidateStage(candidate.id, stageId);
 
       setCandidates((prev) =>
@@ -288,7 +282,7 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
     setIsAddJobModalOpen(true);
   };
 
-  const handleDragStart = (e: React.DragEvent, candidateId: string) => {
+  const handleDragStart = (e: React.DragEvent, candidateId: number) => {
     setDraggedCandidate(candidateId);
   };
 
