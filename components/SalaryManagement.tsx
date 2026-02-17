@@ -8,7 +8,7 @@ import api from '@/services/api';
 
 const SalaryManagement: React.FC = () => {
    const { showToast } = useToast();
-   const [employees, setEmployees] = useState<Employee[]>(MOCK_EMPLOYEES);
+   const [employees, setEmployees] = useState<Employee[]>([]);
    const [changes, setChanges] = useState<CompensationChange[]>([]);
    const [selectedEmpId, setSelectedEmpId] = useState<string | null>(null);
    const [isModalOpen, setIsModalOpen] = useState(false);
