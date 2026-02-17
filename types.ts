@@ -51,7 +51,7 @@ export interface JobOpening {
 }
 
 export interface Candidate {
-  id: string;
+  id: number;
   jobId?: string; // Link to specific job
   name: string;
   role: string; // Display role (usually matches job title)

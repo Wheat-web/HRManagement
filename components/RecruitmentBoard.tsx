@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Candidate, CandidateStage, JobOpening } from "../types";
 import {
+  getCandidates,
+  getCandidatesByJob,
+  updateCandidateStage,
+} from "@/services/candidateService";
+import {
   MoreHorizontal,
   Star,
   AlertCircle,
@@ -32,10 +37,10 @@ interface RecruitmentBoardProps {
 const STAGES = Object.values(CandidateStage);
 
 const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
-  candidates,
+  // candidates,
   //   jobs,
   onSelectCandidate,
-  onUpdateStage,
+  // onUpdateStage,
   onUploadResume,
   //   onAddJob,
 }) => {
@@ -46,11 +51,45 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
   const [jobs, setJobs] = useState<[]>([]);
   const [departments, setDepartments] = useState<DepartmentCombo[]>([]);
   const [editingJobId, setEditingJobId] = useState<number | null>(null);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
 
   useEffect(() => {
     loadJobs();
     loadDepartments();
+    loadCandidates();
   }, []);
+
+  useEffect(() => {
+    if (selectedJobId === "all") {
+      loadCandidates();
+    } else {
+      loadCandidatesByJob(selectedJobId);
+    }
+  }, [selectedJobId]);
+
+  const loadCandidatesByJob = async (jobId: number) => {
+    try {
+      const data = await getCandidatesByJob(jobId);
+
+      console.log(data,"dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+      
+
+      const mapped = data.map((c: any) => ({
+        id: c.candidateId,
+        name: c.fullName,
+        role: c.targetRole || "N/A",
+        experience: c.experienceYears || 0,
+        skills: c.skills ? c.skills.split(",") : [],
+        stage: mapStageIdToEnum(c.stageId),
+        jobId: c.jobOpeningId,
+        appliedDate: new Date(c.createdAt).toLocaleDateString(),
+      }));
+
+      setCandidates(mapped);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const loadJobs = async () => {
     try {
@@ -70,6 +109,88 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
       setDepartments(data);
     } catch (error) {
       console.error("Failed to load departments", error);
+    }
+  };
+
+  const loadCandidates = async () => {
+    try {
+      const data = await getCandidates();
+
+      const mapped = data.map((c: any) => ({
+        id: c.candidateId,
+        name: c.fullName,
+        role: c.targetRole || "N/A",
+        experience: c.experienceYears || 0,
+        skills: c.skills ? c.skills.split(",") : [],
+        stage: mapStageIdToEnum(c.stageId),
+        jobId: c.jobOpeningId,
+        appliedDate: new Date(c.createdAt).toLocaleDateString(),
+      }));
+
+      setCandidates(mapped);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const mapStageIdToEnum = (stageId: number): CandidateStage => {
+    switch (stageId) {
+      case 1:
+        return CandidateStage.NEW;
+      case 2:
+        return CandidateStage.SCREENING;
+      case 3:
+        return CandidateStage.INTERVIEW;
+      case 4:
+        return CandidateStage.OFFER;
+      case 5:
+        return CandidateStage.REJECTED;
+      default:
+        return CandidateStage.NEW;
+    }
+  };
+
+  const mapEnumToStageId = (stage: CandidateStage): number => {
+    switch (stage) {
+      case CandidateStage.NEW:
+        return 1;
+      case CandidateStage.SCREENING:
+        return 2;
+      case CandidateStage.INTERVIEW:
+        return 3;
+      case CandidateStage.OFFER:
+        return 4;
+      case CandidateStage.REJECTED:
+        return 5;
+      default:
+        return 1;
+    }
+  };
+
+  const handleUpdateStage = async (
+    candidate: Candidate,
+    newStage: CandidateStage,
+  ) => {
+    try {
+      const stageId = mapEnumToStageId(newStage);
+
+      console.log(stageId,"stageiddd");
+      
+      console.log(candidate.id,"scandidateddd");
+
+      
+
+      await updateCandidateStage(candidate.id, stageId);
+
+      setCandidates((prev) =>
+        prev.map((c) =>
+          c.id === candidate.id ? { ...c, stage: newStage } : c,
+        ),
+      );
+
+      showToast("Stage updated successfully", "success");
+    } catch (err) {
+      showToast("Failed to update stage", "error");
     }
   };
 
@@ -176,7 +297,7 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
     if (draggedCandidate) {
       const candidate = candidates.find((c) => c.id === draggedCandidate);
       if (candidate && candidate.stage !== stage) {
-        onUpdateStage(candidate, stage);
+        handleUpdateStage(candidate, stage);
       }
     }
     setDraggedCandidate(null);
