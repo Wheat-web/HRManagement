@@ -1,19 +1,18 @@
-
 export enum Role {
-  COMPANY_ADMIN = 'Company Admin',
-  HR_ADMIN = 'HR Admin',
-  RECRUITER = 'Recruiter',
-  MANAGER = 'Hiring Manager',
-  EMPLOYEE = 'Employee',
-  CANDIDATE = 'Candidate'
+  COMPANY_ADMIN = "Company Admin",
+  HR_ADMIN = "HR Admin",
+  RECRUITER = "Recruiter",
+  MANAGER = "Hiring Manager",
+  EMPLOYEE = "Employee",
+  CANDIDATE = "Candidate",
 }
 
 export enum CandidateStage {
-  NEW = 'New Applied',
-  SCREENING = 'AI Screening',
-  INTERVIEW = 'Interview',
-  OFFER = 'Offer',
-  REJECTED = 'Rejected'
+  NEW = "New Applied",
+  SCREENING = "AI Screening",
+  INTERVIEW = "Interview",
+  OFFER = "Offer",
+  REJECTED = "Rejected",
 }
 
 export interface UserProfile {
@@ -44,8 +43,8 @@ export interface JobOpening {
   department: number;
   location: string;
   branchId?: string;
-  type: 'Full-time' | 'Contract' | 'Part-time' | 'Internship';
-  status: 'Open' | 'Closed' | 'Draft';
+  type: "Full-time" | "Contract" | "Part-time" | "Internship";
+  status: "Open" | "Closed" | "Draft";
   postedDate: string;
   hiringManager?: string;
 }
@@ -74,7 +73,7 @@ export interface AuditLog {
   action: string;
   details: string;
   aiInvolved: boolean;
-  riskLevel: 'Low' | 'Medium' | 'High';
+  riskLevel: "Low" | "Medium" | "High";
 }
 
 export interface PolicyDocument {
@@ -84,20 +83,20 @@ export interface PolicyDocument {
   lastUpdated: string;
   contentSnippet: string;
   fullContent?: string; // Added for detail view
-  isActive:boolean;
+  isActive: boolean;
 }
 
 export interface HROpsRequest {
   id: string;
-  type: 'Leave' | 'Payroll' | 'Policy' | 'Onboarding' | 'Advance Payment';
-  status: 'Pending' | 'Approved' | 'Resolved' | 'Rejected';
+  type: "Leave" | "Payroll" | "Policy" | "Onboarding" | "Advance Payment";
+  status: "Pending" | "Approved" | "Resolved" | "Rejected";
   description: string;
   date: string;
   employeeName: string;
   amount?: number;
   repaymentMonths?: number;
   aiAssessment?: {
-    recommendation: 'Approve' | 'Reject';
+    recommendation: "Approve" | "Reject";
     reason: string;
     confidenceScore: number;
   };
@@ -117,16 +116,21 @@ export interface Shift {
   id: string;
   name: string;
   startTime: string; // e.g. "09:00"
-  endTime: string;   // e.g. "17:00"
+  endTime: string; // e.g. "17:00"
   color: string;
 }
 
-export type PaymentFrequency = 'Annual' | 'Monthly' | 'Weekly' | 'Daily' | 'Hourly';
+export type PaymentFrequency =
+  | "Annual"
+  | "Monthly"
+  | "Weekly"
+  | "Daily"
+  | "Hourly";
 
 export interface EmployeeDocument {
   id: string;
   name: string;
-  type: 'PDF' | 'Image' | 'Doc' | 'Other';
+  type: "PDF" | "Image" | "Doc" | "Other";
   uploadDate: string;
   size?: string;
 }
@@ -137,29 +141,29 @@ export interface Employee {
   role: string;
   department: string;
   email: string;
-  status: 'Active' | 'On Leave' | 'Terminated' | 'Onboarding';
+  status: "Active" | "On Leave" | "Terminated" | "Onboarding";
   joinDate: string;
   salary: number; // This is now the rate based on paymentFrequency
-  paymentFrequency: PaymentFrequency; 
+  paymentFrequency: PaymentFrequency;
   currency: string;
   location: string;
   branchId: string; // Link to Branch
   shiftId: string; // Link to Shift
-  
+
   // Expanded Fields
   phone?: string;
   address?: string;
   dob?: string;
   gender?: string;
-  employmentType?: 'Full-time' | 'Part-time' | 'Contract' | 'Intern';
+  employmentType?: "Full-time" | "Part-time" | "Contract" | "Intern";
   managerId?: string;
-  
+
   emergencyContact?: {
     name: string;
     relation: string;
     phone: string;
   };
-  
+
   bankDetails?: {
     bankName: string;
     accountName: string;
@@ -180,9 +184,9 @@ export interface PayrollRecord {
   baseSalary: number;
   bonus: number;
   deductions: number;
-  netPay: number;       // The total amount Credited/Due
-  amountPaid: number;   // The amount actually Paid
-  status: 'Processed' | 'Pending' | 'Hold' | 'Partial';
+  netPay: number; // The total amount Credited/Due
+  amountPaid: number; // The amount actually Paid
+  status: "Processed" | "Pending" | "Hold" | "Partial";
   paymentDate?: string;
 }
 
@@ -191,11 +195,11 @@ export interface LeaveRecord {
   employeeId: string;
   employeeName: string;
   department: string;
-  leaveType: 'Annual' | 'Sick' | 'Unpaid' | 'Maternity';
+  leaveType: "Annual" | "Sick" | "Unpaid" | "Maternity";
   startDate: string;
   endDate: string;
   days: number;
-  status: 'Approved' | 'Pending' | 'Rejected';
+  status: "Approved" | "Pending" | "Rejected";
 }
 
 export interface RecruitmentPlan {
@@ -213,7 +217,7 @@ export interface CompensationChange {
   id: string;
   employeeId: string;
   date: string;
-  type: 'Structure Change' | 'Bonus' | 'Overtime' | 'Correction';
+  type: "Structure Change" | "Bonus" | "Overtime" | "Correction";
   amount: number; // For bonus or OT total
   previousSalary?: number;
   newSalary?: number; // For structure change
@@ -239,7 +243,7 @@ export interface PerformanceReview {
   managerScore: number; // 0-100
   managerFeedback: string;
   finalScore: number;
-  status: 'Pending AI' | 'Draft' | 'Finalized';
+  status: "Pending AI" | "Draft" | "Finalized";
 }
 
 export interface LetterTemplate {
@@ -256,7 +260,7 @@ export interface AttendanceRecord {
   date: string; // YYYY-MM-DD
   checkIn: string; // HH:MM
   checkOut?: string; // HH:MM
-  status: 'Present' | 'Absent' | 'Late' | 'Half Day';
+  status: "Present" | "Absent" | "Late" | "Half Day";
   hoursWorked?: number;
 }
 
@@ -270,19 +274,20 @@ export interface Message {
   body: string;
   date: string;
   isRead: boolean;
-  type: 'General' | 'Template Request' | 'Letter';
+  type: "General" | "Template Request" | "Letter";
 }
 
 export interface EmailIntegration {
-  provider: 'Gmail' | 'Outlook' | 'SMTP';
+  provider: "Gmail" | "Outlook" | "SMTP";
   email: string;
-  status: 'Connected' | 'Disconnected' | 'Error';
+  status: "Connected" | "Disconnected" | "Error";
   lastSync: string;
 }
+type MeetingProvider = "GoogleMeet" | "Zoom";
 
 export interface Interview {
-  id: string;
-  candidateId: string;
+  id: number;
+  candidateId: number;
   candidateName: string;
   role: string;
   interviewerId: string;
@@ -290,8 +295,9 @@ export interface Interview {
   date: string; // YYYY-MM-DD
   time: string; // HH:MM
   duration: number; // minutes
-  type: 'Screening' | 'Technical' | 'System Design' | 'Cultural Fit' | 'Final';
-  status: 'Scheduled' | 'Completed' | 'Cancelled';
+  type: "Screening" | "Technical" | "System Design" | "Cultural Fit" | "Final";
+  status: "Scheduled" | "Completed" | "Cancelled";
+  meetingProvider: MeetingProvider;
   meetingLink?: string;
   notes?: string;
 }
@@ -307,7 +313,7 @@ export interface RoleDefinition {
 
 export interface OnboardingTask {
   id: string;
-  category: 'IT' | 'HR' | 'Training' | 'Team' | 'Admin';
+  category: "IT" | "HR" | "Training" | "Team" | "Admin";
   task: string;
   isCompleted: boolean;
 }

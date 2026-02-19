@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Candidate, CandidateStage, JobOpening } from "../types";
 import {
+  deleteCandidate,
   getCandidates,
   getCandidatesByJob,
   updateCandidateStage,
@@ -17,8 +18,9 @@ import {
   Filter,
   X,
   Edit2,
+  Trash2,
 } from "lucide-react";
-import { useToast } from "../context/ToastContext";
+import { ToastProvider, useToast } from "../context/ToastContext";
 import api from "@/services/api";
 import {
   DepartmentCombo,
@@ -43,7 +45,7 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
   onSelectCandidate,
   // onUpdateStage,
   onUploadResume,
-  reloadTrigger
+  reloadTrigger,
   //   onAddJob,
 }) => {
   const { showToast } = useToast();
@@ -67,7 +69,7 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
     } else {
       loadCandidatesByJob(selectedJobId);
     }
-  }, [selectedJobId,reloadTrigger]);
+  }, [selectedJobId, reloadTrigger]);
 
   const loadCandidatesByJob = async (jobId: number) => {
     try {
@@ -218,6 +220,14 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
     return res.data;
   };
 
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteCandidate(id);
+      setCandidates((prev) => prev.filter((c) => c.id !== id));
+      showToast("Candidate deleted successfully", "success");
+    } catch (error) {}
+  };
+
   const handleCreateJob = async () => {
     if (!newJob.title) {
       showToast("Job title is required", "warning");
@@ -307,6 +317,10 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
     if (score >= 60) return "bg-amber-100 text-amber-700";
     return "bg-red-100 text-red-700";
   };
+
+  // const handleDelete = (id: number) => {
+  //   setCandidates((prev) => prev.filter((c) => c.id !== id));
+  // };
 
   return (
     <div className="h-full flex gap-6">
@@ -489,6 +503,15 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
                             {candidate.matchScore}%
                           </span>
                         )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(candidate.id);
+                          }}
+                          className="text-slate-400 hover:text-red-600 transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
 
                       <p className="text-xs text-slate-500 mb-3 font-medium">
