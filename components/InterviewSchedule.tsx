@@ -19,7 +19,7 @@ import { CandidateCombo, getCandidateCombo } from "@/services/candidateService";
 import { useToast } from "@/context/ToastContext";
 
 const InterviewSchedule: React.FC = () => {
-   const { showToast } = useToast();
+  const { showToast } = useToast();
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [filter, setFilter] = useState<"All" | "Scheduled" | "Completed">(
     "All",
@@ -31,6 +31,7 @@ const InterviewSchedule: React.FC = () => {
   useEffect(() => {
     loadEmployees();
     loadCandidates();
+    loadInterviews();
   }, []);
 
   const loadEmployees = async () => {
@@ -53,6 +54,15 @@ const InterviewSchedule: React.FC = () => {
     }
   };
 
+  const loadInterviews = async () => {
+    try {
+      const res = await api.get("/InterviewSchedule");
+      setInterviews(res.data);
+    } catch (err) {
+      console.error("Failed to load interviews", err);
+    }
+  };
+
   // New Interview Form State
   const [newInterview, setNewInterview] = useState<Partial<Interview>>({
     date: new Date().toISOString().split("T")[0],
@@ -67,11 +77,10 @@ const InterviewSchedule: React.FC = () => {
   );
 
   const selectedEmployee = employees.find(
-    (e) => e.empID === newInterview.interviewerId, 
+    (e) => e.empID === newInterview.interviewerId,
   );
 
   const handleCreate = async () => {
-
     if (!newInterview.candidateId || !newInterview.interviewerId) return;
 
     let meetingLink = newInterview.meetingLink;
@@ -95,11 +104,12 @@ const InterviewSchedule: React.FC = () => {
         branchID: 1,
       });
 
+      await loadInterviews()
       showToast("Stage updated successfully", "success");
       setIsModalOpen(false);
     } catch (err) {
       console.error(err);
-      showToast("Error scheduling interview",'error');
+      showToast("Error scheduling interview", "error");
     }
   };
 
