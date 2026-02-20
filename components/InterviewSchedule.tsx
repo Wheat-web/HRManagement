@@ -10,6 +10,7 @@ import {
   Check,
   Search,
   Filter,
+  Edit2,
   MoreHorizontal,
   Link as LinkIcon,
 } from "lucide-react";
@@ -27,6 +28,9 @@ const InterviewSchedule: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [employees, setEmployees] = useState<EmployeeCombo[]>([]);
   const [candidates, setCandidates] = useState<CandidateCombo[]>([]);
+  const [editingInterviewId, setEditingInterviewId] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     loadEmployees();
@@ -83,10 +87,10 @@ const InterviewSchedule: React.FC = () => {
   const handleCreate = async () => {
     if (!newInterview.candidateId || !newInterview.interviewerId) return;
 
-    let meetingLink = newInterview.meetingLink;
-
     try {
-      // If Zoom → Call backend to generate link
+      let meetingLink = newInterview.meetingLink;
+
+      // 🔹 Generate Zoom link if selected
       if (newInterview.meetingProvider === "Zoom") {
         const zoomRes = await api.post("/Zoom/create-meeting", {
           date: newInterview.date,
@@ -96,20 +100,61 @@ const InterviewSchedule: React.FC = () => {
 
         meetingLink = zoomRes.data.joinUrl;
       }
-      await api.post("/InterviewSchedule", {
+
+      const payload = {
         ...newInterview,
+        meetingLink,
         candidateName: selectedCandidate?.fullName,
         role: selectedCandidate?.targetRole,
         interviewerName: selectedEmployee?.name,
         branchID: 1,
-      });
+      };
 
-      await loadInterviews()
-      showToast("Stage updated successfully", "success");
+      if (editingInterviewId) {
+        // ✅ UPDATE
+        await api.put(`/InterviewSchedule/${editingInterviewId}`, payload);
+        showToast("Interview updated successfully", "success");
+      } else {
+        // ✅ CREATE
+        await api.post("/InterviewSchedule", payload);
+        showToast("Interview scheduled successfully", "success");
+      }
+
+      await loadInterviews();
+
       setIsModalOpen(false);
+      setEditingInterviewId(null);
+
+      // 🔹 Reset form
+      setNewInterview({
+        date: new Date().toISOString().split("T")[0],
+        time: "10:00",
+        duration: 45,
+        type: "Technical",
+        status: "Scheduled",
+        meetingProvider: "Zoom",
+      });
     } catch (err) {
       console.error(err);
-      showToast("Error scheduling interview", "error");
+      showToast("Error saving interview", "error");
+    }
+  };
+
+  const updateInterviewStatus = async (
+    interviewId: number,
+    status: "Scheduled" | "Completed" | "Cancelled",
+  ) => {
+    try {
+      await api.put(`/InterviewSchedule/${interviewId}/status/${status}`);
+
+      setInterviews((prev) =>
+        prev.map((i) => (i.id === interviewId ? { ...i, status } : i)),
+      );
+
+      showToast("Status updated successfully", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to update status", "error");
     }
   };
 
@@ -144,7 +189,18 @@ const InterviewSchedule: React.FC = () => {
           </p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingInterviewId(null);
+            setNewInterview({
+              date: new Date().toISOString().split("T")[0],
+              time: "10:00",
+              duration: 45,
+              type: "Technical",
+              status: "Scheduled",
+              meetingProvider: "Zoom",
+            });
+            setIsModalOpen(true);
+          }}
           className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-sm"
         >
           <Plus size={16} /> Schedule Interview
@@ -260,13 +316,40 @@ const InterviewSchedule: React.FC = () => {
                         <Video size={16} /> Join
                       </a>
                     )}
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(interview.status)}`}
+                    <select
+                      value={interview.status}
+                      onChange={(e) =>
+                        updateInterviewStatus(
+                          interview.id,
+                          e.target.value as
+                            | "Scheduled"
+                            | "Completed"
+                            | "Cancelled",
+                        )
+                      }
+                      className={`px-3 py-1 rounded-full text-xs font-bold uppercase border outline-none cursor-pointer ${getStatusColor(interview.status)}`}
                     >
-                      {interview.status}
-                    </span>
-                    <button className="p-2 text-slate-300 hover:text-slate-600 rounded-full hover:bg-slate-50">
-                      <MoreHorizontal size={18} />
+                      <option value="Scheduled">Scheduled</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                    <button
+                      onClick={() => {
+                        setNewInterview({
+                          ...interview,
+                          date: interview.date
+                            ? new Date(interview.date)
+                                .toISOString()
+                                .split("T")[0]
+                            : "",
+                        });
+
+                        setEditingInterviewId(interview.id);
+                        setIsModalOpen(true);
+                      }}
+                      className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-slate-50"
+                    >
+                      <Edit2 size={18} />
                     </button>
                   </div>
                 </div>
@@ -281,7 +364,9 @@ const InterviewSchedule: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-slate-800">Schedule Interview</h3>
+              <h3 className="font-bold text-slate-800">
+                {editingInterviewId ? "Edit Interview" : "Schedule Interview"}
+              </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600"
