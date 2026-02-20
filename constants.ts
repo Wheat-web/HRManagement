@@ -1,5 +1,4 @@
-
-import { Candidate, CandidateStage, Role, AuditLog, PolicyDocument, HROpsRequest, Department, Employee, PayrollRecord, LeaveRecord, CompensationChange, PerformanceReview, LetterTemplate, Shift, AttendanceRecord, Message, Interview, RoleDefinition, JobOpening, Branch } from './types';
+import { PermissionNode, Candidate, CandidateStage, Role, AuditLog, PolicyDocument, HROpsRequest, Department, Employee, PayrollRecord, LeaveRecord, CompensationChange, PerformanceReview, LetterTemplate, Shift, AttendanceRecord, Message, Interview, RoleDefinition, JobOpening, Branch } from "./types";
 
 export const MOCK_BRANCHES: Branch[] = [
   { id: 'b1', name: 'HQ - New York', location: 'New York, USA', currency: 'USD', timezone: 'EST', headCount: 45, manager: 'Michael Scott', isHeadquarters: true },
@@ -280,6 +279,125 @@ export const MOCK_INTERVIEWS: Interview[] = [
   { id: 'i3', candidateId: 'c4', candidateName: 'Diana Prince', role: 'UX Designer', interviewerId: 'e1', interviewerName: 'Jane Doe', date: '2023-10-30', time: '11:00', duration: 60, type: 'Technical', status: 'Scheduled', meetingLink: 'https://meet.google.com/qwe-rty-uio' },
 ];
 
+const standardActions = (module: string) => [
+  { id: `${module}.view`, label: "View" },
+  { id: `${module}.create`, label: "Create" },
+  { id: `${module}.edit`, label: "Edit" },
+  { id: `${module}.delete`, label: "Delete" },
+  { id: `${module}.export`, label: "Export" }
+];
+
+export const PERMISSION_TREE: PermissionNode[] = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    children: [
+      { id: "dashboard.view", label: "View" }
+    ]
+  },
+  {
+    id: "recruitment",
+    label: "Recruitment",
+    children: standardActions("recruitment")
+  },
+  {
+    id: "interviews",
+    label: "Interviews",
+    children: standardActions("interviews")
+  },
+  {
+    id: "onboarding",
+    label: "Onboarding Hub",
+    children: standardActions("onboarding")
+  },
+  {
+    id: "payroll",
+    label: "Payroll",
+    children: standardActions("payroll")
+  },
+  {
+    id: "salary",
+    label: "Salary Management",
+    children: standardActions("salary")
+  },
+  {
+    id: "productivity",
+    label: "Productivity",
+    children: standardActions("productivity")
+  },
+  {
+    id: "branch",
+    label: "Branch Management",
+    children: standardActions("branch")
+  },
+  {
+    id: "employees",
+    label: "Employee Directory",
+    children: standardActions("employees")
+  },
+  {
+    id: "shift",
+    label: "Shift Management",
+    children: standardActions("shift")
+  },
+  {
+    id: "attendance",
+    label: "Attendance",
+    children: standardActions("attendance")
+  },
+  {
+    id: "mail",
+    label: "Official Mail",
+    children: standardActions("mail")
+  },
+  {
+    id: "planner",
+    label: "Recruitment Planner",
+    children: standardActions("planner")
+  },
+  {
+    id: "department",
+    label: "Department",
+    children: standardActions("department")
+  },
+  {
+    id: "roles",
+    label: "Roles & Permissions",
+    children: [
+      { id: "roles.view", label: "View" },
+      { id: "roles.manage", label: "Manage Users & Roles" }
+    ]
+  },
+  {
+    id: "reports",
+    label: "Reports",
+    children: [
+      { id: "reports.view", label: "View" },
+      { id: "reports.export", label: "Export" }
+    ]
+  },
+  {
+    id: "hr_operations",
+    label: "HR Operations",
+    children: standardActions("hr_operations")
+  },
+  {
+    id: "compliance",
+    label: "Compliance & Audit",
+    children: standardActions("compliance")
+  },
+  {
+    id: "policies",
+    label: "Policies",
+    children: standardActions("policies")
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    children: standardActions("settings")
+  }
+];
+
 export const MOCK_ROLE_DEFINITIONS: RoleDefinition[] = [
   { 
     id: 'r_admin', 
@@ -321,18 +439,4 @@ export const MOCK_ROLE_DEFINITIONS: RoleDefinition[] = [
     isSystem: false,
     permissions: ['view_self']
   }
-];
-
-export const PERMISSIONS_LIST = [
-  { id: 'view_candidates', label: 'View Candidates', category: 'Recruitment' },
-  { id: 'edit_candidates', label: 'Edit Candidates', category: 'Recruitment' },
-  { id: 'schedule_interviews', label: 'Schedule Interviews', category: 'Recruitment' },
-  { id: 'view_jobs', label: 'View Job Requisitions', category: 'Recruitment' },
-  { id: 'approve_leaves', label: 'Approve Leaves', category: 'HR Operations' },
-  { id: 'view_payroll', label: 'View Payroll Data', category: 'HR Operations' },
-  { id: 'manage_policies', label: 'Manage Policies', category: 'HR Operations' },
-  { id: 'view_team_performance', label: 'View Team Performance', category: 'Performance' },
-  { id: 'conduct_interviews', label: 'Conduct Interviews', category: 'Recruitment' },
-  { id: 'manage_users', label: 'Manage Users & Roles', category: 'System' },
-  { id: 'view_reports', label: 'View Reports', category: 'Analytics' },
 ];

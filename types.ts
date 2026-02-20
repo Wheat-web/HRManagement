@@ -331,3 +331,18 @@ export interface OnboardingPlan {
   phases: OnboardingPhase[];
   welcomeMessage: string;
 }
+
+export interface PermissionNode {
+  id: string;
+  label: string;
+  children?: PermissionNode[];
+}
+
+export interface RoleDefinition {
+  id: string;
+  name: string;
+  description: string;
+  usersCount: number;
+  isSystem: boolean;
+  permissions: string[];
+}

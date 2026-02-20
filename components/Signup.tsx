@@ -67,8 +67,8 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
         name: candidateData.fullName,
         email: candidateData.email,
         role: Role.CANDIDATE,
-        companyName: 'Job Seeker',
-        avatarUrl: undefined
+        //companyName: 'Job Seeker',
+        //avatarUrl: undefined
       };
       
       onSignup(user);
@@ -99,8 +99,8 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
         name: userData.newUserName,
         email: userData.newUserEmail,
         role: userData.newUserRole,
-        companyName: 'PeopleCore Demo Corp', // Mock linked company
-        avatarUrl: undefined
+        //companyName: 'PeopleCore Demo Corp', // Mock linked company
+        //avatarUrl: undefined
       };
       
       onSignup(user);
