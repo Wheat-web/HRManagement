@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Department, Branch } from "../types";
-import { Plus, MapPin, MoreHorizontal, Globe, Edit2 } from "lucide-react";
+import {
+  Plus,
+  MapPin,
+  MoreHorizontal,
+  Globe,
+  Edit2,
+  RefreshCw,
+} from "lucide-react";
 import { getBranchCombo, BranchCombo } from "@/services/branchService";
 import { useToast } from "../context/ToastContext";
 import api from "@/services/api";
@@ -171,17 +178,25 @@ const OrganizationManagement: React.FC<OrganizationManagementProps> = ({
             {selectedBranchId === "all" ? "all branches" : ""} .
           </p>
         </div>
-        <button
-          onClick={() => {
-            setIsEditing(false);
-            setFormData({});
-            setIsModalOpen(true);
-          }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center gap-2"
-        >
-          <Plus size={16} />
-          Add Department
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={loadDepartments}
+            className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2 shadow-sm"
+          >
+            <RefreshCw size={16} /> Refresh
+          </button>
+          <button
+            onClick={() => {
+              setIsEditing(false);
+              setFormData({});
+              setIsModalOpen(true);
+            }}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center gap-2"
+          >
+            <Plus size={16} />
+            Add Department
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">

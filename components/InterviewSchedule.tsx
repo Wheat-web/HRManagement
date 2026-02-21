@@ -13,6 +13,7 @@ import {
   Edit2,
   MoreHorizontal,
   Link as LinkIcon,
+  RefreshCw,
 } from "lucide-react";
 import api from "@/services/api";
 import { getEmployeeCombo, EmployeeCombo } from "@/services/employeeService";
@@ -31,6 +32,7 @@ const InterviewSchedule: React.FC = () => {
   const [editingInterviewId, setEditingInterviewId] = useState<number | null>(
     null,
   );
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadEmployees();
@@ -60,10 +62,13 @@ const InterviewSchedule: React.FC = () => {
 
   const loadInterviews = async () => {
     try {
+      setLoading(true);
       const res = await api.get("/InterviewSchedule");
       setInterviews(res.data);
     } catch (err) {
       console.error("Failed to load interviews", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -188,23 +193,31 @@ const InterviewSchedule: React.FC = () => {
             Manage upcoming technical and cultural interviews.
           </p>
         </div>
-        <button
-          onClick={() => {
-            setEditingInterviewId(null);
-            setNewInterview({
-              date: new Date().toISOString().split("T")[0],
-              time: "10:00",
-              duration: 45,
-              type: "Technical",
-              status: "Scheduled",
-              meetingProvider: "Zoom",
-            });
-            setIsModalOpen(true);
-          }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-sm"
-        >
-          <Plus size={16} /> Schedule Interview
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={loadInterviews}
+            className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2 shadow-sm"
+          >
+            <RefreshCw size={16} /> Refresh
+          </button>
+          <button
+            onClick={() => {
+              setEditingInterviewId(null);
+              setNewInterview({
+                date: new Date().toISOString().split("T")[0],
+                time: "10:00",
+                duration: 45,
+                type: "Technical",
+                status: "Scheduled",
+                meetingProvider: "Zoom",
+              });
+              setIsModalOpen(true);
+            }}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-sm"
+          >
+            <Plus size={16} /> Schedule Interview
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full min-h-0">
@@ -252,8 +265,15 @@ const InterviewSchedule: React.FC = () => {
         </div>
 
         {/* Interview List */}
-        <div className="lg:col-span-3 space-y-4 overflow-y-auto pb-6">
-          {filteredInterviews.length === 0 ? (
+        <div className="lg:col-span-3 space-y-4 overflow-y-auto pb-6 relative">
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-sm text-slate-500">Loading interviews...</p>
+              </div>
+            </div>
+          ) : filteredInterviews.length === 0 ? (
             <div className="bg-white p-12 rounded-xl border border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400">
               <Calendar size={48} className="mb-4 opacity-50" />
               <p>No interviews found matching your filters.</p>
@@ -277,9 +297,10 @@ const InterviewSchedule: React.FC = () => {
                         {new Date(interview.date).getDate()}
                       </span>
                     </div>
+
                     <div>
                       <div className="flex items-center gap-1.5 font-bold text-slate-800">
-                        <Clock size={16} className="text-slate-400" />{" "}
+                        <Clock size={16} className="text-slate-400" />
                         {interview.time}
                       </div>
                       <div className="text-xs text-slate-500">
@@ -316,6 +337,7 @@ const InterviewSchedule: React.FC = () => {
                         <Video size={16} /> Join
                       </a>
                     )}
+
                     <select
                       value={interview.status}
                       onChange={(e) =>
@@ -327,12 +349,15 @@ const InterviewSchedule: React.FC = () => {
                             | "Cancelled",
                         )
                       }
-                      className={`px-3 py-1 rounded-full text-xs font-bold uppercase border outline-none cursor-pointer ${getStatusColor(interview.status)}`}
+                      className={`px-3 py-1 rounded-full text-xs font-bold uppercase border outline-none cursor-pointer ${getStatusColor(
+                        interview.status,
+                      )}`}
                     >
                       <option value="Scheduled">Scheduled</option>
                       <option value="Completed">Completed</option>
                       <option value="Cancelled">Cancelled</option>
                     </select>
+
                     <button
                       onClick={() => {
                         setNewInterview({
