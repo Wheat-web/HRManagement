@@ -113,6 +113,12 @@ function App() {
     setCurrentView(loggedInUser.role === Role.CANDIDATE ? "jobs" : "dashboard");
   };
 
+  const [reloadCandidatesFlag, setReloadCandidatesFlag] = useState(false);
+
+  const triggerReloadCandidates = () => {
+    setReloadCandidatesFlag((prev) => !prev);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
@@ -144,7 +150,7 @@ function App() {
 
   const handleApplyJob = (jobId: string, candidateData: Partial<Candidate>) => {
     const newCandidate: Candidate = {
-      id: `c_${Date.now()}`,
+      id: candidateData.id,
       jobId: jobId,
       name: candidateData.name || "Unknown",
       email: candidateData.email || "unknown@email.com",
@@ -398,6 +404,7 @@ function App() {
           <RecruitmentBoard
             candidates={visibleCandidates}
             jobs={visibleJobs}
+            reloadTrigger={reloadCandidatesFlag}
             onSelectCandidate={setSelectedCandidate}
             onUpdateStage={(c, stage) => {
               handleUpdateCandidate({ ...c, stage });
@@ -545,7 +552,9 @@ function App() {
           {isUploadModalOpen && (
             <ResumeUpload
               onClose={() => setIsUploadModalOpen(false)}
-              onAddCandidate={handleAddCandidate}
+              onCandidateCreated={() => {
+                triggerReloadCandidates();
+              }}
               jobs={jobs}
             />
           )}

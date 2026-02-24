@@ -15,6 +15,7 @@ import {
   Settings,
   ShieldCheck,
   Check,
+  RefreshCw,
 } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 import api from "@/services/api";
@@ -41,6 +42,7 @@ const BranchManagement: React.FC<BranchManagementProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Default Settings State (In real app, this would come from a global config)
   const [defaultSettings, setDefaultSettings] = useState({
@@ -65,10 +67,15 @@ const BranchManagement: React.FC<BranchManagementProps> = ({
   }, []);
 
   const loadBranches = async () => {
-    const res = await api.get("/Branch");
-    console.log(res, "resulttttttttttttttttttttttttttt");
-
-    setBranches(res.data);
+    try {
+      setLoading(true);
+      const res = await api.get("/Branch");
+      setBranches(res.data);
+    } catch (err) {
+      showToast("Failed to load Branches", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredBranches = Array.isArray(branches)
@@ -98,27 +105,27 @@ const BranchManagement: React.FC<BranchManagementProps> = ({
     setIsModalOpen(true);
   };
 
-//   const handleDelete = (id: string) => {
-//     const branch = branches.find((b) => b.id === id);
-//     if (branch?.isHeadquarters) {
-//       showToast(
-//         "Cannot delete Headquarters. Please assign a new HQ first.",
-//         "error",
-//       );
-//       return;
-//     }
-//     // Check if branch has employees
-//     const count = employees.filter((e) => e.branchId === id).length;
-//     if (count > 0) {
-//       showToast(
-//         `Cannot delete branch with ${count} active employees.`,
-//         "error",
-//       );
-//       return;
-//     }
-//     onDeleteBranch(id);
-//     showToast("Branch deleted successfully", "info");
-//   };
+  //   const handleDelete = (id: string) => {
+  //     const branch = branches.find((b) => b.id === id);
+  //     if (branch?.isHeadquarters) {
+  //       showToast(
+  //         "Cannot delete Headquarters. Please assign a new HQ first.",
+  //         "error",
+  //       );
+  //       return;
+  //     }
+  //     // Check if branch has employees
+  //     const count = employees.filter((e) => e.branchId === id).length;
+  //     if (count > 0) {
+  //       showToast(
+  //         `Cannot delete branch with ${count} active employees.`,
+  //         "error",
+  //       );
+  //       return;
+  //     }
+  //     onDeleteBranch(id);
+  //     showToast("Branch deleted successfully", "info");
+  //   };
 
   const handleSave = async () => {
     if (!formData.name?.trim() || !formData.location?.trim()) {
@@ -176,7 +183,7 @@ const BranchManagement: React.FC<BranchManagementProps> = ({
 
         showToast("Branch added successfully", "success");
       }
-      loadBranches()
+      loadBranches();
       setIsModalOpen(false);
     } catch (err) {
       console.error(err);
@@ -219,6 +226,12 @@ const BranchManagement: React.FC<BranchManagementProps> = ({
           </p>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={loadBranches}
+            className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2 shadow-sm"
+          >
+            <RefreshCw size={16} /> Refresh
+          </button>
           <button
             onClick={() => setIsSettingsModalOpen(true)}
             className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2 shadow-sm"
@@ -283,98 +296,111 @@ const BranchManagement: React.FC<BranchManagementProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredBranches.map((branch) => {
-              const stats = getBranchStats(branch.id);
-              return (
-                <div
-                  key={branch.id}
-                  className={`bg-white border rounded-xl p-5 hover:shadow-md transition-shadow relative group ${branch.isHeadquarters ? "border-indigo-200 ring-1 ring-indigo-100" : "border-slate-200"}`}
-                >
-                  {branch.isHeadquarters && (
-                    <div className="absolute top-0 right-0 bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-1 rounded-bl-lg rounded-tr-lg border-b border-l border-indigo-200">
-                      HEADQUARTERS
-                    </div>
-                  )}
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-sm text-slate-500">Loading Branches...</p>
+              </div>
+            </div>
+          ) : filteredBranches.length === 0 ? (
+            <div className="text-center text-slate-400 py-20">
+              No branches found.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredBranches.map((branch) => {
+                const stats = getBranchStats(branch.id);
+                return (
+                  <div
+                    key={branch.id}
+                    className={`bg-white border rounded-xl p-5 hover:shadow-md transition-shadow relative group ${branch.isHeadquarters ? "border-indigo-200 ring-1 ring-indigo-100" : "border-slate-200"}`}
+                  >
+                    {branch.isHeadquarters && (
+                      <div className="absolute top-0 right-0 bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-1 rounded-bl-lg rounded-tr-lg border-b border-l border-indigo-200">
+                        HEADQUARTERS
+                      </div>
+                    )}
 
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 pt-4">
-                    <button
-                      onClick={() => handleEdit(branch)}
-                      className="p-1.5 text-slate-400 hover:text-indigo-600 bg-white border border-slate-200 rounded-lg hover:border-indigo-200"
-                    >
-                      <Edit2 size={14} />
-                    </button>
-                    {/* <button
+                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 pt-4">
+                      <button
+                        onClick={() => handleEdit(branch)}
+                        className="p-1.5 text-slate-400 hover:text-indigo-600 bg-white border border-slate-200 rounded-lg hover:border-indigo-200"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      {/* <button
                       onClick={() => handleDelete(branch.id)}
                       className="p-1.5 text-slate-400 hover:text-red-600 bg-white border border-slate-200 rounded-lg hover:border-red-200"
                     >
                       <Trash2 size={14} />
                     </button> */}
-                  </div>
+                    </div>
 
-                  <div className="flex items-center gap-3 mb-4">
-                    <div
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${branch.isHeadquarters ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600"}`}
-                    >
-                      {branch.isHeadquarters ? (
-                        <ShieldCheck size={20} />
-                      ) : (
-                        <Building2 size={20} />
-                      )}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${branch.isHeadquarters ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600"}`}
+                      >
+                        {branch.isHeadquarters ? (
+                          <ShieldCheck size={20} />
+                        ) : (
+                          <Building2 size={20} />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-900">
+                          {branch.name}
+                        </h3>
+                        <p className="text-xs text-slate-500 flex items-center gap-1">
+                          <MapPin size={10} /> {branch.location}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900">
-                        {branch.name}
-                      </h3>
-                      <p className="text-xs text-slate-500 flex items-center gap-1">
-                        <MapPin size={10} /> {branch.location}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm py-2 border-b border-slate-50">
-                      <span className="text-slate-500 flex items-center gap-2">
-                        <Users size={14} /> Headcount
-                      </span>
-                      <span className="font-medium text-slate-900">
-                        {branch.headCount}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm py-2 border-b border-slate-50">
-                      <span className="text-slate-500 flex items-center gap-2">
-                        <DollarSign size={14} /> Currency
-                      </span>
-                      <span className="font-medium text-slate-900">
-                        {branch.currency}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm py-2 border-b border-slate-50">
-                      <span className="text-slate-500 flex items-center gap-2">
-                        <Globe size={14} /> Timezone
-                      </span>
-                      <span className="font-medium text-slate-900">
-                        {branch.timezone}
-                      </span>
-                    </div>
-                    <div className="pt-2">
-                      <p className="text-xs text-slate-400 uppercase font-bold mb-1">
-                        Branch Manager
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
-                          {branch.manager.charAt(0)}
-                        </div>
-                        <span className="text-sm font-medium text-slate-700">
-                          {branch.manager}
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm py-2 border-b border-slate-50">
+                        <span className="text-slate-500 flex items-center gap-2">
+                          <Users size={14} /> Headcount
                         </span>
+                        <span className="font-medium text-slate-900">
+                          {branch.headCount}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm py-2 border-b border-slate-50">
+                        <span className="text-slate-500 flex items-center gap-2">
+                          <DollarSign size={14} /> Currency
+                        </span>
+                        <span className="font-medium text-slate-900">
+                          {branch.currency}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm py-2 border-b border-slate-50">
+                        <span className="text-slate-500 flex items-center gap-2">
+                          <Globe size={14} /> Timezone
+                        </span>
+                        <span className="font-medium text-slate-900">
+                          {branch.timezone}
+                        </span>
+                      </div>
+                      <div className="pt-2">
+                        <p className="text-xs text-slate-400 uppercase font-bold mb-1">
+                          Branch Manager
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
+                            {branch.manager.charAt(0)}
+                          </div>
+                          <span className="text-sm font-medium text-slate-700">
+                            {branch.manager}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 

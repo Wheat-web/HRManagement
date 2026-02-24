@@ -32,10 +32,14 @@ import {
   Save,
   User,
   CheckCircle,
+  RefreshCw,
 } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 import api from "@/services/api";
-import { DepartmentCombo, getDepartmentCombo } from "@/services/departmentService";
+import {
+  DepartmentCombo,
+  getDepartmentCombo,
+} from "@/services/departmentService";
 
 interface EmployeeManagementProps {
   // initialEmployees: Employee[];
@@ -941,12 +945,21 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
             Manage workforce profiles, documents, and compliance data.
           </p>
         </div>
-        <button
-          onClick={handleOpenAdd}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-sm"
-        >
-          <Plus size={16} /> Add Employee
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={loadEmployees}
+            className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2 shadow-sm"
+          >
+            <RefreshCw size={16} /> Refresh
+          </button>
+
+          <button
+            onClick={handleOpenAdd}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-sm"
+          >
+            <Plus size={16} /> Add Employee
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">

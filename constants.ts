@@ -1,11 +1,10 @@
-
-import { Candidate, CandidateStage, Role, AuditLog, PolicyDocument, HROpsRequest, Department, Employee, PayrollRecord, LeaveRecord, CompensationChange, PerformanceReview, LetterTemplate, Shift, AttendanceRecord, Message, Interview, RoleDefinition, JobOpening, Branch } from './types';
+import { PermissionNode, Candidate, Role, AuditLog, PolicyDocument, HROpsRequest, Department, Employee, PayrollRecord, LeaveRecord, CompensationChange, PerformanceReview, LetterTemplate, Shift, AttendanceRecord, Message, Interview, RoleDefinition, JobOpening, Branch } from "./types";
 
 export const MOCK_BRANCHES: Branch[] = [
-  { id: 'b1', name: 'HQ - New York', location: 'New York, USA', currency: 'USD', timezone: 'EST', headCount: 45, manager: 'Michael Scott', isHeadquarters: true },
-  { id: 'b2', name: 'Midwest Hub', location: 'Chicago, IL', currency: 'USD', timezone: 'CST', headCount: 22, manager: 'Dwight S.' },
-  { id: 'b3', name: 'West Coast', location: 'San Francisco, CA', currency: 'USD', timezone: 'PST', headCount: 12, manager: 'David Chen' },
-  { id: 'b4', name: 'Remote Global', location: 'Remote', currency: 'USD', timezone: 'UTC', headCount: 15, manager: 'Sarah Connor' },
+  // { id: 'b1', name: 'HQ - New York', location: 'New York, USA', currency: 'USD', timezone: 'EST', headCount: 45, manager: 'Michael Scott', isHeadquarters: true },
+  // { id: 'b2', name: 'Midwest Hub', location: 'Chicago, IL', currency: 'USD', timezone: 'CST', headCount: 22, manager: 'Dwight S.' },
+  // { id: 'b3', name: 'West Coast', location: 'San Francisco, CA', currency: 'USD', timezone: 'PST', headCount: 12, manager: 'David Chen' },
+  // { id: 'b4', name: 'Remote Global', location: 'Remote', currency: 'USD', timezone: 'UTC', headCount: 15, manager: 'Sarah Connor' },
 ];
 
 export const MOCK_SHIFTS: Shift[] = [
@@ -15,93 +14,93 @@ export const MOCK_SHIFTS: Shift[] = [
 ];
 
 export const MOCK_JOBS: JobOpening[] = [
-  { id: 'j1', title: 'Senior Frontend Engineer', department: 'Engineering', location: 'New York (Hybrid)', branchId: 'b1', type: 'Full-time', status: 'Open', postedDate: '2023-10-01' },
-  { id: 'j2', title: 'Product Manager', department: 'Product', location: 'Remote', branchId: 'b4', type: 'Full-time', status: 'Open', postedDate: '2023-10-05' },
-  { id: 'j3', title: 'UX Designer', department: 'Product', location: 'Remote', branchId: 'b4', type: 'Contract', status: 'Open', postedDate: '2023-10-10' },
-  { id: 'j4', title: 'Data Scientist', department: 'Data', location: 'Chicago', branchId: 'b2', type: 'Full-time', status: 'Draft', postedDate: '2023-10-28' },
+  // { id: 'j1', title: 'Senior Frontend Engineer', department: 'Engineering', location: 'New York (Hybrid)', branchId: 'b1', type: 'Full-time', status: 'Open', postedDate: '2023-10-01' },
+  // { id: 'j2', title: 'Product Manager', department: 'Product', location: 'Remote', branchId: 'b4', type: 'Full-time', status: 'Open', postedDate: '2023-10-05' },
+  // { id: 'j3', title: 'UX Designer', department: 'Product', location: 'Remote', branchId: 'b4', type: 'Contract', status: 'Open', postedDate: '2023-10-10' },
+  // { id: 'j4', title: 'Data Scientist', department: 'Data', location: 'Chicago', branchId: 'b2', type: 'Full-time', status: 'Draft', postedDate: '2023-10-28' },
 ];
 
 export const MOCK_CANDIDATES: Candidate[] = [
-  {
-    id: 'c1',
-    jobId: 'j1',
-    name: 'Alice Johnson',
-    role: 'Senior Frontend Engineer',
-    stage: CandidateStage.NEW,
-    email: 'alice.j@example.com',
-    experience: 6,
-    resumeSummary: 'Experienced React developer with 6 years in fintech. Expert in TypeScript, Redux, and D3.js. Previously led a team of 4 at TechCorp.',
-    skills: ['React', 'TypeScript', 'Node.js', 'AWS'],
-    appliedDate: '2023-10-25',
-  },
-  {
-    id: 'c2',
-    jobId: 'j1',
-    name: 'Bob Smith',
-    role: 'Senior Frontend Engineer',
-    stage: CandidateStage.SCREENING,
-    email: 'bob.s@example.com',
-    experience: 3,
-    resumeSummary: 'Frontend developer focused on Vue.js and Angular. Some React exposure. Strong UI/UX background.',
-    skills: ['Vue.js', 'CSS', 'Figma'],
-    matchScore: 65,
-    aiReasoning: 'Candidate has strong UI skills but lacks deep React/TypeScript experience required for the Senior role.',
-    appliedDate: '2023-10-24',
-  },
-  {
-    id: 'c3',
-    jobId: 'j2',
-    name: 'Charlie Davis',
-    role: 'Product Manager',
-    stage: CandidateStage.INTERVIEW,
-    email: 'charlie.d@example.com',
-    experience: 8,
-    resumeSummary: 'Product veteran with B2B SaaS experience. Strong Agile background.',
-    skills: ['Agile', 'JIRA', 'SQL', 'Strategy'],
-    matchScore: 92,
-    aiReasoning: 'Excellent fit. Deep B2B SaaS experience aligns perfectly with current roadmap.',
-    appliedDate: '2023-10-20',
-  },
-  {
-    id: 'c4',
-    jobId: 'j3',
-    name: 'Diana Prince',
-    role: 'UX Designer',
-    stage: CandidateStage.OFFER,
-    email: 'diana.p@example.com',
-    experience: 5,
-    resumeSummary: 'Award-winning UX designer. Portfolio includes major e-commerce redesigns.',
-    skills: ['Figma', 'Prototyping', 'User Research'],
-    matchScore: 95,
-    appliedDate: '2023-10-15',
-  }
+  // {
+  //   id: 'c1',
+  //   jobId: 'j1',
+  //   name: 'Alice Johnson',
+  //   role: 'Senior Frontend Engineer',
+  //   stage: CandidateStage.NEW,
+  //   email: 'alice.j@example.com',
+  //   experience: 6,
+  //   resumeSummary: 'Experienced React developer with 6 years in fintech. Expert in TypeScript, Redux, and D3.js. Previously led a team of 4 at TechCorp.',
+  //   skills: ['React', 'TypeScript', 'Node.js', 'AWS'],
+  //   appliedDate: '2023-10-25',
+  // },
+  // {
+  //   id: 'c2',
+  //   jobId: 'j1',
+  //   name: 'Bob Smith',
+  //   role: 'Senior Frontend Engineer',
+  //   stage: CandidateStage.SCREENING,
+  //   email: 'bob.s@example.com',
+  //   experience: 3,
+  //   resumeSummary: 'Frontend developer focused on Vue.js and Angular. Some React exposure. Strong UI/UX background.',
+  //   skills: ['Vue.js', 'CSS', 'Figma'],
+  //   matchScore: 65,
+  //   aiReasoning: 'Candidate has strong UI skills but lacks deep React/TypeScript experience required for the Senior role.',
+  //   appliedDate: '2023-10-24',
+  // },
+  // {
+  //   id: 'c3',
+  //   jobId: 'j2',
+  //   name: 'Charlie Davis',
+  //   role: 'Product Manager',
+  //   stage: CandidateStage.INTERVIEW,
+  //   email: 'charlie.d@example.com',
+  //   experience: 8,
+  //   resumeSummary: 'Product veteran with B2B SaaS experience. Strong Agile background.',
+  //   skills: ['Agile', 'JIRA', 'SQL', 'Strategy'],
+  //   matchScore: 92,
+  //   aiReasoning: 'Excellent fit. Deep B2B SaaS experience aligns perfectly with current roadmap.',
+  //   appliedDate: '2023-10-20',
+  // },
+  // {
+  //   id: 'c4',
+  //   jobId: 'j3',
+  //   name: 'Diana Prince',
+  //   role: 'UX Designer',
+  //   stage: CandidateStage.OFFER,
+  //   email: 'diana.p@example.com',
+  //   experience: 5,
+  //   resumeSummary: 'Award-winning UX designer. Portfolio includes major e-commerce redesigns.',
+  //   skills: ['Figma', 'Prototyping', 'User Research'],
+  //   matchScore: 95,
+  //   appliedDate: '2023-10-15',
+  // }
 ];
 
 export const MOCK_POLICIES: PolicyDocument[] = [
-  { 
-    id: 'p1', 
-    title: 'Remote Work Policy', 
-    category: 'General', 
-    lastUpdated: '2023-09-01', 
-    contentSnippet: 'Employees may work remotely up to 3 days a week. Core hours must be maintained from 10 AM to 4 PM.',
-    fullContent: 'Employees are permitted to work remotely up to 3 days per week (Tuesday, Wednesday, and Thursday are recommended in-office days). \n\nCore hours of 10 AM to 4 PM your local time must be maintained regardless of location. \n\nEmployees must ensure they have a stable internet connection and a quiet workspace. VPN usage is mandatory for accessing internal systems.'
-  },
-  { 
-    id: 'p2', 
-    title: 'Expense Reimbursement', 
-    category: 'Finance', 
-    lastUpdated: '2023-08-15', 
-    contentSnippet: 'All travel expenses must be submitted within 30 days. Receipts are required for amounts over $25.',
-    fullContent: '1. All business-related expenses must be pre-approved by your manager.\n2. Claims must be submitted via the HR Portal within 30 days of the expense date.\n3. Receipts are mandatory for any single expense exceeding $25.\n4. Meal allowance is capped at $50/day during travel.'
-  },
-  { 
-    id: 'p3', 
-    title: 'Code of Conduct', 
-    category: 'Legal', 
-    lastUpdated: '2023-01-10', 
-    contentSnippet: 'We expect all employees to treat others with respect. Harassment of any kind is strictly prohibited.',
-    fullContent: 'Our company is committed to providing a safe, inclusive, and respectful workplace. \n\n- Discrimination or harassment based on race, color, religion, gender, or orientation is strictly prohibited and grounds for immediate termination.\n- Conflicts of interest must be disclosed to HR immediately.\n- Company assets must be used for business purposes only.'
-  },
+  // { 
+  //   id: 'p1', 
+  //   title: 'Remote Work Policy', 
+  //   category: 'General', 
+  //   lastUpdated: '2023-09-01', 
+  //   contentSnippet: 'Employees may work remotely up to 3 days a week. Core hours must be maintained from 10 AM to 4 PM.',
+  //   fullContent: 'Employees are permitted to work remotely up to 3 days per week (Tuesday, Wednesday, and Thursday are recommended in-office days). \n\nCore hours of 10 AM to 4 PM your local time must be maintained regardless of location. \n\nEmployees must ensure they have a stable internet connection and a quiet workspace. VPN usage is mandatory for accessing internal systems.'
+  // },
+  // { 
+  //   id: 'p2', 
+  //   title: 'Expense Reimbursement', 
+  //   category: 'Finance', 
+  //   lastUpdated: '2023-08-15', 
+  //   contentSnippet: 'All travel expenses must be submitted within 30 days. Receipts are required for amounts over $25.',
+  //   fullContent: '1. All business-related expenses must be pre-approved by your manager.\n2. Claims must be submitted via the HR Portal within 30 days of the expense date.\n3. Receipts are mandatory for any single expense exceeding $25.\n4. Meal allowance is capped at $50/day during travel.'
+  // },
+  // { 
+  //   id: 'p3', 
+  //   title: 'Code of Conduct', 
+  //   category: 'Legal', 
+  //   lastUpdated: '2023-01-10', 
+  //   contentSnippet: 'We expect all employees to treat others with respect. Harassment of any kind is strictly prohibited.',
+  //   fullContent: 'Our company is committed to providing a safe, inclusive, and respectful workplace. \n\n- Discrimination or harassment based on race, color, religion, gender, or orientation is strictly prohibited and grounds for immediate termination.\n- Conflicts of interest must be disclosed to HR immediately.\n- Company assets must be used for business purposes only.'
+  // },
 ];
 
 export const MOCK_AUDIT_LOGS: AuditLog[] = [
@@ -119,11 +118,11 @@ export const MOCK_HR_REQUESTS: HROpsRequest[] = [
 ];
 
 export const MOCK_DEPARTMENTS: Department[] = [
-  { id: 'd1', name: 'Engineering', manager: 'David Chen', headCount: 24, location: 'New York', branchId: 'b1' },
-  { id: 'd2', name: 'Product', manager: 'Sarah Connor', headCount: 8, location: 'New York', branchId: 'b1' },
-  { id: 'd3', name: 'HR & Ops', manager: 'Michael Scott', headCount: 4, location: 'Remote', branchId: 'b4' },
-  { id: 'd4', name: 'Sales', manager: 'Dwight S.', headCount: 15, location: 'Chicago', branchId: 'b2' },
-  { id: 'd5', name: 'Marketing', manager: 'Jim Halpert', headCount: 10, location: 'Scranton', branchId: 'b1' },
+  // { id: 'd1', name: 'Engineering', manager: 'David Chen', headCount: 24, location: 'New York', branchId: 'b1' },
+  // { id: 'd2', name: 'Product', manager: 'Sarah Connor', headCount: 8, location: 'New York', branchId: 'b1' },
+  // { id: 'd3', name: 'HR & Ops', manager: 'Michael Scott', headCount: 4, location: 'Remote', branchId: 'b4' },
+  // { id: 'd4', name: 'Sales', manager: 'Dwight S.', headCount: 15, location: 'Chicago', branchId: 'b2' },
+  // { id: 'd5', name: 'Marketing', manager: 'Jim Halpert', headCount: 10, location: 'Scranton', branchId: 'b1' },
 ];
 
 export const MOCK_EMPLOYEES: Employee[] = [
@@ -275,9 +274,128 @@ export const MOCK_MESSAGES: Message[] = [
 
 const TODAY = new Date().toISOString().split('T')[0];
 export const MOCK_INTERVIEWS: Interview[] = [
-  { id: 'i1', candidateId: 'c3', candidateName: 'Charlie Davis', role: 'Product Manager', interviewerId: 'e4', interviewerName: 'Chris Evans', date: TODAY, time: '14:00', duration: 60, type: 'Cultural Fit', status: 'Scheduled', meetingLink: 'https://meet.google.com/abc-defg-hij' },
-  { id: 'i2', candidateId: 'c2', candidateName: 'Bob Smith', role: 'Senior Frontend Engineer', interviewerId: 'e1', interviewerName: 'Jane Doe', date: TODAY, time: '10:00', duration: 45, type: 'Technical', status: 'Completed', meetingLink: 'https://meet.google.com/xyz-uvw-rst' },
-  { id: 'i3', candidateId: 'c4', candidateName: 'Diana Prince', role: 'UX Designer', interviewerId: 'e1', interviewerName: 'Jane Doe', date: '2023-10-30', time: '11:00', duration: 60, type: 'Technical', status: 'Scheduled', meetingLink: 'https://meet.google.com/qwe-rty-uio' },
+  // { id: 'i1', candidateId: 'c3', candidateName: 'Charlie Davis', role: 'Product Manager', interviewerId: 'e4', interviewerName: 'Chris Evans', date: TODAY, time: '14:00', duration: 60, type: 'Cultural Fit', status: 'Scheduled', meetingLink: 'https://meet.google.com/abc-defg-hij' },
+  // { id: 'i2', candidateId: 'c2', candidateName: 'Bob Smith', role: 'Senior Frontend Engineer', interviewerId: 'e1', interviewerName: 'Jane Doe', date: TODAY, time: '10:00', duration: 45, type: 'Technical', status: 'Completed', meetingLink: 'https://meet.google.com/xyz-uvw-rst' },
+  // { id: 'i3', candidateId: 'c4', candidateName: 'Diana Prince', role: 'UX Designer', interviewerId: 'e1', interviewerName: 'Jane Doe', date: '2023-10-30', time: '11:00', duration: 60, type: 'Technical', status: 'Scheduled', meetingLink: 'https://meet.google.com/qwe-rty-uio' },
+];
+
+const standardActions = (module: string) => [
+  { id: `${module}.view`, label: "View" },
+  { id: `${module}.create`, label: "Create" },
+  { id: `${module}.edit`, label: "Edit" },
+  { id: `${module}.delete`, label: "Delete" },
+  { id: `${module}.export`, label: "Export" }
+];
+
+export const PERMISSION_TREE: PermissionNode[] = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    children: [
+      { id: "dashboard.view", label: "View" }
+    ]
+  },
+  {
+    id: "recruitment",
+    label: "Recruitment",
+    children: standardActions("recruitment")
+  },
+  {
+    id: "interviews",
+    label: "Interviews",
+    children: standardActions("interviews")
+  },
+  {
+    id: "onboarding",
+    label: "Onboarding Hub",
+    children: standardActions("onboarding")
+  },
+  {
+    id: "payroll",
+    label: "Payroll",
+    children: standardActions("payroll")
+  },
+  {
+    id: "salary",
+    label: "Salary Management",
+    children: standardActions("salary")
+  },
+  {
+    id: "productivity",
+    label: "Productivity",
+    children: standardActions("productivity")
+  },
+  {
+    id: "branch",
+    label: "Branch Management",
+    children: standardActions("branch")
+  },
+  {
+    id: "employees",
+    label: "Employee Directory",
+    children: standardActions("employees")
+  },
+  {
+    id: "shift",
+    label: "Shift Management",
+    children: standardActions("shift")
+  },
+  {
+    id: "attendance",
+    label: "Attendance",
+    children: standardActions("attendance")
+  },
+  {
+    id: "mail",
+    label: "Official Mail",
+    children: standardActions("mail")
+  },
+  {
+    id: "planner",
+    label: "Recruitment Planner",
+    children: standardActions("planner")
+  },
+  {
+    id: "department",
+    label: "Department",
+    children: standardActions("department")
+  },
+  {
+    id: "roles",
+    label: "Roles & Permissions",
+    children: [
+      { id: "roles.view", label: "View" },
+      { id: "roles.manage", label: "Manage Users & Roles" }
+    ]
+  },
+  {
+    id: "reports",
+    label: "Reports",
+    children: [
+      { id: "reports.view", label: "View" },
+      { id: "reports.export", label: "Export" }
+    ]
+  },
+  {
+    id: "hr_operations",
+    label: "HR Operations",
+    children: standardActions("hr_operations")
+  },
+  {
+    id: "compliance",
+    label: "Compliance & Audit",
+    children: standardActions("compliance")
+  },
+  {
+    id: "policies",
+    label: "Policies",
+    children: standardActions("policies")
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    children: standardActions("settings")
+  },
 ];
 
 export const MOCK_ROLE_DEFINITIONS: RoleDefinition[] = [
@@ -321,18 +439,4 @@ export const MOCK_ROLE_DEFINITIONS: RoleDefinition[] = [
     isSystem: false,
     permissions: ['view_self']
   }
-];
-
-export const PERMISSIONS_LIST = [
-  { id: 'view_candidates', label: 'View Candidates', category: 'Recruitment' },
-  { id: 'edit_candidates', label: 'Edit Candidates', category: 'Recruitment' },
-  { id: 'schedule_interviews', label: 'Schedule Interviews', category: 'Recruitment' },
-  { id: 'view_jobs', label: 'View Job Requisitions', category: 'Recruitment' },
-  { id: 'approve_leaves', label: 'Approve Leaves', category: 'HR Operations' },
-  { id: 'view_payroll', label: 'View Payroll Data', category: 'HR Operations' },
-  { id: 'manage_policies', label: 'Manage Policies', category: 'HR Operations' },
-  { id: 'view_team_performance', label: 'View Team Performance', category: 'Performance' },
-  { id: 'conduct_interviews', label: 'Conduct Interviews', category: 'Recruitment' },
-  { id: 'manage_users', label: 'Manage Users & Roles', category: 'System' },
-  { id: 'view_reports', label: 'View Reports', category: 'Analytics' },
 ];

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Candidate, CandidateStage, JobOpening } from "../types";
 import {
+  deleteCandidate,
   getCandidates,
   getCandidatesByJob,
   updateCandidateStage,
@@ -17,8 +18,10 @@ import {
   Filter,
   X,
   Edit2,
+  Trash2,
+  RefreshCw,
 } from "lucide-react";
-import { useToast } from "../context/ToastContext";
+import { ToastProvider, useToast } from "../context/ToastContext";
 import api from "@/services/api";
 import {
   DepartmentCombo,
@@ -28,9 +31,10 @@ import {
 interface RecruitmentBoardProps {
   //   candidates: Candidate[];
   //   jobs: JobOpening[];
-  //   onSelectCandidate: (c: Candidate) => void;
+  onSelectCandidate: (c: Candidate) => void;
   //   onUpdateStage: (c: Candidate, stage: CandidateStage) => void;
   onUploadResume: () => void;
+  reloadTrigger: boolean;
   //   onAddJob: (job: JobOpening) => void;
 }
 
@@ -42,21 +46,21 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
   onSelectCandidate,
   // onUpdateStage,
   onUploadResume,
+  reloadTrigger,
   //   onAddJob,
 }) => {
   const { showToast } = useToast();
-  const [draggedCandidate, setDraggedCandidate] = useState<string | null>(null);
+  const [draggedCandidate, setDraggedCandidate] = useState<number | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<number | "all">("all");
   const [isAddJobModalOpen, setIsAddJobModalOpen] = useState(false);
   const [jobs, setJobs] = useState<[]>([]);
   const [departments, setDepartments] = useState<DepartmentCombo[]>([]);
   const [editingJobId, setEditingJobId] = useState<number | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadJobs();
-    loadDepartments();
-    loadCandidates();
+    refreshBoard();
   }, []);
 
   useEffect(() => {
@@ -65,24 +69,45 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
     } else {
       loadCandidatesByJob(selectedJobId);
     }
-  }, [selectedJobId]);
+  }, [selectedJobId, reloadTrigger]);
+
+  const refreshBoard = async () => {
+    try {
+      setLoading(true);
+
+      await loadJobs();
+      await loadDepartments();
+
+      if (selectedJobId === "all") {
+        await loadCandidates();
+      } else {
+        await loadCandidatesByJob(selectedJobId);
+      }
+    } catch (err) {
+      showToast("Failed to refresh board", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadCandidatesByJob = async (jobId: number) => {
     try {
       const data = await getCandidatesByJob(jobId);
 
-      console.log(data,"dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-      
-
       const mapped = data.map((c: any) => ({
         id: c.candidateId,
+        jobId: c.jobOpeningId,
+
         name: c.fullName,
         role: c.targetRole || "N/A",
+        email: c.email,
         experience: c.experienceYears || 0,
+        resumeSummary: c.professionalSummary || "",
         skills: c.skills ? c.skills.split(",") : [],
         stage: mapStageIdToEnum(c.stageId),
-        jobId: c.jobOpeningId,
         appliedDate: new Date(c.createdAt).toLocaleDateString(),
+        matchScore: c.matchScore,
+        aiReasoning: c.aiReasoning,
       }));
 
       setCandidates(mapped);
@@ -94,9 +119,6 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
   const loadJobs = async () => {
     try {
       const data = await getJobOpenings();
-
-      console.log(data, "dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-
       setJobs(data);
     } catch (err) {
       console.error(err);
@@ -173,13 +195,6 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
   ) => {
     try {
       const stageId = mapEnumToStageId(newStage);
-
-      console.log(stageId,"stageiddd");
-      
-      console.log(candidate.id,"scandidateddd");
-
-      
-
       await updateCandidateStage(candidate.id, stageId);
 
       setCandidates((prev) =>
@@ -222,6 +237,14 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
   const updateJobOpening = async (id: number, job: any) => {
     const res = await api.put(`/JobOpening/${id}`, job);
     return res.data;
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteCandidate(id);
+      setCandidates((prev) => prev.filter((c) => c.id !== id));
+      showToast("Candidate deleted successfully", "success");
+    } catch (error) {}
   };
 
   const handleCreateJob = async () => {
@@ -288,7 +311,7 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
     setIsAddJobModalOpen(true);
   };
 
-  const handleDragStart = (e: React.DragEvent, candidateId: string) => {
+  const handleDragStart = (e: React.DragEvent, candidateId: number) => {
     setDraggedCandidate(candidateId);
   };
 
@@ -313,6 +336,10 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
     if (score >= 60) return "bg-amber-100 text-amber-700";
     return "bg-red-100 text-red-700";
   };
+
+  // const handleDelete = (id: number) => {
+  //   setCandidates((prev) => prev.filter((c) => c.id !== id));
+  // };
 
   return (
     <div className="h-full flex gap-6">
@@ -428,6 +455,12 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
             </p>
           </div>
           <div className="flex gap-3">
+            <button
+              onClick={refreshBoard}
+              className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2 shadow-sm"
+            >
+              <RefreshCw size={16} /> Refresh
+            </button>
             <button className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-50 text-sm font-medium">
               <Filter size={16} /> Filter
             </button>
@@ -469,67 +502,101 @@ const RecruitmentBoard: React.FC<RecruitmentBoardProps> = ({
                 </div>
 
                 <div className="flex-1 p-3 overflow-y-auto custom-scrollbar space-y-3">
-                  {stageCandidates.map((candidate) => (
-                    <div
-                      key={candidate.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, candidate.id)}
-                      onClick={() => onSelectCandidate(candidate)}
-                      className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 cursor-pointer hover:shadow-md transition-all hover:border-indigo-300 group relative"
-                    >
-                      {/* AI Badge for Screening Column */}
-                      {stage === CandidateStage.SCREENING && (
-                        <div className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 z-10">
-                          <Star size={10} fill="currentColor" /> AI Analysis
-                        </div>
-                      )}
-
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-bold text-slate-800">
-                          {candidate.name}
-                        </h4>
-                        {candidate.matchScore && (
-                          <span
-                            className={`text-xs font-bold px-2 py-1 rounded-md ${getMatchColor(candidate.matchScore)}`}
-                          >
-                            {candidate.matchScore}%
-                          </span>
-                        )}
+                  {loading ? (
+                    <div className="flex items-center justify-center h-40">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-6 h-6 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-xs text-slate-500">
+                          Loading candidates...
+                        </p>
                       </div>
-
-                      <p className="text-xs text-slate-500 mb-3 font-medium">
-                        {candidate.role}
-                      </p>
-
-                      <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
-                        <span className="bg-slate-50 px-1.5 py-0.5 rounded">
-                          {candidate.experience}y exp
-                        </span>
-                        <span className="bg-slate-50 px-1.5 py-0.5 rounded truncate max-w-[120px]">
-                          {candidate.skills.slice(0, 2).join(", ")}
-                        </span>
-                      </div>
-
-                      {candidate.aiReasoning &&
-                        stage === CandidateStage.SCREENING && (
-                          <div className="bg-indigo-50 p-2 rounded text-xs text-indigo-800 mb-3 border border-indigo-100 line-clamp-2 italic">
-                            "{candidate.aiReasoning}"
+                    </div>
+                  ) : stageCandidates.length === 0 ? (
+                    <div className="flex items-center justify-center h-32 text-slate-400 text-xs">
+                      No candidates
+                    </div>
+                  ) : (
+                    stageCandidates.map((candidate) => (
+                      <div
+                        key={candidate.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, candidate.id)}
+                        onClick={() => onSelectCandidate(candidate)}
+                        className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 cursor-pointer hover:shadow-md transition-all hover:border-indigo-300 group relative"
+                      >
+                        {/* AI Badge for Screening Column */}
+                        {stage === CandidateStage.SCREENING && (
+                          <div className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 z-10">
+                            <Star size={10} fill="currentColor" /> AI Analysis
                           </div>
                         )}
 
-                      <div className="flex justify-between items-center mt-2 border-t border-slate-50 pt-2">
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          {candidate.appliedDate}
-                        </span>
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                          <MoreHorizontal
-                            size={14}
-                            className="text-slate-400"
-                          />
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-bold text-slate-800">
+                            {candidate.name}
+                          </h4>
+
+                          <div className="flex items-center gap-2">
+                            {candidate.matchScore && (
+                              <span
+                                className={`text-xs font-bold px-2 py-1 rounded-md ${getMatchColor(
+                                  candidate.matchScore,
+                                )}`}
+                              >
+                                {candidate.matchScore}%
+                              </span>
+                            )}
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(candidate.id);
+                              }}
+                              className="text-slate-400 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-slate-500 mb-3 font-medium">
+                          {candidate.role}
+                        </p>
+
+                        <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
+                          <span className="bg-slate-50 px-1.5 py-0.5 rounded">
+                            {candidate.experience}y exp
+                          </span>
+
+                          {candidate.skills.length > 0 && (
+                            <span className="bg-slate-50 px-1.5 py-0.5 rounded truncate max-w-[120px]">
+                              {candidate.skills.slice(0, 2).join(", ")}
+                            </span>
+                          )}
+                        </div>
+
+                        {candidate.aiReasoning &&
+                          stage === CandidateStage.SCREENING && (
+                            <div className="bg-indigo-50 p-2 rounded text-xs text-indigo-800 mb-3 border border-indigo-100 line-clamp-2 italic">
+                              "{candidate.aiReasoning}"
+                            </div>
+                          )}
+
+                        <div className="flex justify-between items-center mt-2 border-t border-slate-50 pt-2">
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {candidate.appliedDate}
+                          </span>
+
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MoreHorizontal
+                              size={14}
+                              className="text-slate-400"
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             );
