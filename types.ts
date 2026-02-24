@@ -253,13 +253,15 @@ export interface AttendanceRecord {
   id: string;
   employeeId: string;
   employeeName: string;
-  date: string; // YYYY-MM-DD
-  checkIn: string; // HH:MM
-  checkOut?: string; // HH:MM
-  status: 'Present' | 'Absent' | 'Late' | 'Half Day';
-  hoursWorked?: number;
-}
+  date: string;          // yyyy-mm-dd
+  status: AttendanceStatus;
 
+  checkIn?: string;      // HH:mm
+  checkOut?: string;     // HH:mm
+  hoursWorked?: number;
+
+  remark?: string;       // optional note (late reason / leave reason)
+}
 export interface Message {
   id: string;
   senderId: string;
@@ -325,3 +327,10 @@ export interface OnboardingPlan {
   phases: OnboardingPhase[];
   welcomeMessage: string;
 }
+export type AttendanceStatus =
+  | "Present"
+  | "Absent"
+  | "Late"
+  | "Half Day"
+  | "On Leave"
+  | "Holiday";
