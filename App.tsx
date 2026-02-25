@@ -50,6 +50,7 @@ import {
   Branch,
 } from "./types";
 import { ToastProvider } from "./context/ToastContext";
+import { PermissionContext } from "./context/PermissionContext";
 import api from "./services/api";
 import { jwtDecode } from "jwt-decode";
 
@@ -76,43 +77,42 @@ function App() {
     useState<PayrollRecord[]>(MOCK_PAYROLL);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(MOCK_AUDIT_LOGS);
   const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+  const [permissions, setPermissions] = useState<string[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
 
     if (token) {
-      try {
-        const decoded: any = jwtDecode(token);
+      const decoded: any = jwtDecode(token);
 
-        setUser({
-          id: decoded.id,
-          name: decoded.name,
-          email: decoded.email,
-          role: decoded.role,
-        });
-      } catch {
-        setUser(null);
-      }
+      const loggedUser = {
+        id: decoded.id,
+        name: decoded.name,
+        email: decoded.email,
+        role: decoded.role,
+      };
+
+      setUser(loggedUser);
+
+      const load = async () => {
+        const res = await api.get(`/RolePermission/user/${decoded.id}`);
+
+        const codes = res.data.map((p: any) => `${p.module}.${p.action}`);
+
+        setPermissions(codes);
+      };
+
+      load();
     }
   }, []);
 
-  const handleLogin = (loggedInUser: UserProfile) => {
+  const handleLogin = async (loggedInUser: UserProfile) => {
     setUser(loggedInUser);
-
-    // Set default branch context based on user role/assignment
-    // if (loggedInUser.role === Role.COMPANY_ADMIN || loggedInUser.role === Role.HR_ADMIN) {
-    //     setSelectedBranchId('all');
-    // } else if (loggedInUser.branchId) {
-    //     setSelectedBranchId(loggedInUser.branchId);
-    // } else {
-    //     // Fallback for demo users without branch
-    //     setSelectedBranchId('all');
-    // }
-
-    // If logging in as candidate, default to 'jobs' view
-    setCurrentView(loggedInUser.role === Role.CANDIDATE ? "jobs" : "dashboard");
+    const res = await api.get(`/RolePermission/user/${loggedInUser.id}`);
+    const codes = res.data.map((p: any) => `${p.module}.${p.action}`);
+    setPermissions(codes);
+    setCurrentView("dashboard");
   };
-
   const [reloadCandidatesFlag, setReloadCandidatesFlag] = useState(false);
 
   const triggerReloadCandidates = () => {
@@ -367,6 +367,14 @@ function App() {
     visibleEmployees.some((e) => e.id === p.employeeId),
   );
 
+  const canAccess = (code: string) => {
+    if (user?.role === Role.COMPANY_ADMIN || user?.role === Role.HR_ADMIN)
+      return true;
+
+    return permissions.includes(code);
+  };
+
+  
   const renderContent = () => {
     switch (currentView) {
       case "dashboard":
@@ -522,43 +530,45 @@ function App() {
           />
         )
       ) : (
-        <Layout
-          user={user}
-          branches={branches}
-          selectedBranchId={selectedBranchId}
-          onSelectBranch={
-            user.role === Role.COMPANY_ADMIN || user.role === Role.HR_ADMIN
-              ? setSelectedBranchId
-              : undefined
-          }
-          onLogout={handleLogout}
-          currentView={currentView}
-          onNavigate={setCurrentView}
-          unreadMessagesCount={unreadMessagesCount}
-        >
-          <div className="animate-in fade-in duration-300">
-            {renderContent()}
-          </div>
+        <PermissionContext.Provider value={{ permissions, user }}>
+          <Layout
+            user={user}
+            branches={branches}
+            selectedBranchId={selectedBranchId}
+            onSelectBranch={
+              user.role === Role.COMPANY_ADMIN || user.role === Role.HR_ADMIN
+                ? setSelectedBranchId
+                : undefined
+            }
+            onLogout={handleLogout}
+            currentView={currentView}
+            onNavigate={setCurrentView}
+            unreadMessagesCount={unreadMessagesCount}
+          >
+            <div className="animate-in fade-in duration-300">
+              {renderContent()}
+            </div>
 
-          {selectedCandidate && (
-            <CandidateModal
-              candidate={selectedCandidate}
-              onClose={() => setSelectedCandidate(null)}
-              onUpdate={handleUpdateCandidate}
-              onAudit={addAuditLog}
-            />
-          )}
+            {selectedCandidate && (
+              <CandidateModal
+                candidate={selectedCandidate}
+                onClose={() => setSelectedCandidate(null)}
+                onUpdate={handleUpdateCandidate}
+                onAudit={addAuditLog}
+              />
+            )}
 
-          {isUploadModalOpen && (
-            <ResumeUpload
-              onClose={() => setIsUploadModalOpen(false)}
-              onCandidateCreated={() => {
-                triggerReloadCandidates();
-              }}
-              jobs={jobs}
-            />
-          )}
-        </Layout>
+            {isUploadModalOpen && (
+              <ResumeUpload
+                onClose={() => setIsUploadModalOpen(false)}
+                onCandidateCreated={() => {
+                  triggerReloadCandidates();
+                }}
+                jobs={jobs}
+              />
+            )}
+          </Layout>
+        </PermissionContext.Provider>
       )}
     </ToastProvider>
   );

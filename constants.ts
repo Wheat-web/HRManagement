@@ -398,45 +398,45 @@ export const PERMISSION_TREE: PermissionNode[] = [
   },
 ];
 
-export const MOCK_ROLE_DEFINITIONS: RoleDefinition[] = [
-  { 
-    id: 'r_admin', 
-    name: 'HR Admin', 
-    description: 'Full system access to all modules and settings.', 
-    usersCount: 2, 
-    isSystem: true,
-    permissions: ['all'] 
-  },
-  { 
-    id: 'r_recruiter', 
-    name: 'Recruiter', 
-    description: 'Can manage candidates, schedule interviews, and view job requisitions.', 
-    usersCount: 3, 
-    isSystem: true,
-    permissions: ['view_candidates', 'edit_candidates', 'schedule_interviews', 'view_jobs'] 
-  },
-  { 
-    id: 'r_manager', 
-    name: 'Hiring Manager', 
-    description: 'Can view candidates, conduct interviews, and manage team performance.', 
-    usersCount: 8, 
-    isSystem: true,
-    permissions: ['view_candidates', 'conduct_interviews', 'view_team_performance', 'approve_leaves'] 
-  },
-  { 
-    id: 'r_employee', 
-    name: 'Employee', 
-    description: 'Standard access to personal dashboard, leaves, and payroll.', 
-    usersCount: 45, 
-    isSystem: true,
-    permissions: ['view_self', 'request_leave', 'view_payslips'] 
-  },
-  {
-    id: 'r_intern',
-    name: 'Intern',
-    description: 'Limited access for temporary staff.',
-    usersCount: 5,
-    isSystem: false,
-    permissions: ['view_self']
-  }
-];
+// export const MOCK_ROLE_DEFINITIONS: RoleDefinition[] = [
+//   { 
+//     id: 'r_admin', 
+//     name: 'HR Admin', 
+//     description: 'Full system access to all modules and settings.', 
+//     usersCount: 2, 
+//     isSystem: true,
+//     permissions: ['all'] 
+//   },
+//   { 
+//     id: 'r_recruiter', 
+//     name: 'Recruiter', 
+//     description: 'Can manage candidates, schedule interviews, and view job requisitions.', 
+//     usersCount: 3, 
+//     isSystem: true,
+//     permissions: ['view_candidates', 'edit_candidates', 'schedule_interviews', 'view_jobs'] 
+//   },
+//   { 
+//     id: 'r_manager', 
+//     name: 'Hiring Manager', 
+//     description: 'Can view candidates, conduct interviews, and manage team performance.', 
+//     usersCount: 8, 
+//     isSystem: true,
+//     permissions: ['view_candidates', 'conduct_interviews', 'view_team_performance', 'approve_leaves'] 
+//   },
+//   { 
+//     id: 'r_employee', 
+//     name: 'Employee', 
+//     description: 'Standard access to personal dashboard, leaves, and payroll.', 
+//     usersCount: 45, 
+//     isSystem: true,
+//     permissions: ['view_self', 'request_leave', 'view_payslips'] 
+//   },
+//   {
+//     id: 'r_intern',
+//     name: 'Intern',
+//     description: 'Limited access for temporary staff.',
+//     usersCount: 5,
+//     isSystem: false,
+//     permissions: ['view_self']
+//   }
+// ];

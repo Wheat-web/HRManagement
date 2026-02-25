@@ -1,32 +1,52 @@
-import React, { useState } from "react";
-import { MOCK_ROLE_DEFINITIONS, PERMISSION_TREE } from "../constants";
-import { RoleDefinition } from "../types";
+import React, { useState, useEffect } from "react";
+import { PERMISSION_TREE } from "../constants";
+import { Permission, RoleDefinition } from "../types";
 import PermissionTree from "./PermissionTree";
 import { Plus, Trash2, Lock } from "lucide-react";
+import api from "@/services/api";
 
 const RoleManagement: React.FC = () => {
-  const [roles, setRoles] = useState<RoleDefinition[]>(MOCK_ROLE_DEFINITIONS);
-  const [selectedRole, setSelectedRole] = useState<RoleDefinition>(roles[0]);
+  // const [roles, setRoles] = useState<[]>([]);
+  // const [selectedRole, setSelectedRole] = useState<"" | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  // const [tempRole, setTempRole] = useState<"" | null>(null);
+  const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
+  const [roles, setRoles] = useState<RoleDefinition[]>([]);
+  const [selectedRole, setSelectedRole] = useState<RoleDefinition | null>(null);
   const [tempRole, setTempRole] = useState<RoleDefinition | null>(null);
 
   const currentRole = isEditing && tempRole ? tempRole : selectedRole;
+
+  useEffect(() => {
+    loadPermissions();
+  }, []);
+
+  const loadPermissions = async () => {
+    try {
+      const res = await api.get("/RolePermission/Permission");
+      setAllPermissions(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadRoles = async () => {
+    
+  }
 
   // =============================
   // CREATE ROLE
   // =============================
   const handleCreateRole = () => {
     const newRole: RoleDefinition = {
-      id: `role_${Date.now()}`,
-      name: "New Role",
-      description: "Role description",
+      id: "", // empty means not saved yet
+      name: "",
+      description: "",
       usersCount: 0,
       isSystem: false,
-      permissions: []
+      permissions: [],
     };
 
-    setRoles([...roles, newRole]);
-    setSelectedRole(newRole);
     setTempRole(newRole);
     setIsEditing(true);
   };
@@ -35,9 +55,9 @@ const RoleManagement: React.FC = () => {
   // DELETE ROLE
   // =============================
   const handleDeleteRole = () => {
-    if (selectedRole.isSystem) return;
+    if (!selectedRole || selectedRole.isSystem) return;
 
-    const updated = roles.filter(r => r.id !== selectedRole.id);
+    const updated = roles.filter((r) => r.id !== selectedRole.id);
     setRoles(updated);
     setSelectedRole(updated[0]);
     setIsEditing(false);
@@ -57,20 +77,32 @@ const RoleManagement: React.FC = () => {
     }
   };
 
-  // =============================
-  // SAVE
-  // =============================
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!tempRole) return;
 
-    const updated = roles.map(r =>
-      r.id === tempRole.id ? tempRole : r
-    );
+    try {
+      // Convert selected codes → PermissionID
+      const permissionIds = tempRole?.permissions
+        .filter((p) => p !== "all")
+        .map((code) => {
+          const found = allPermissions.find((ap) => ap.code === code);
+          return found ? { permissionID: found.id } : null;
+        })
+        .filter(Boolean);
 
-    setRoles(updated);
-    setSelectedRole(tempRole);
-    setTempRole(null);
-    setIsEditing(false);
+      const payload = {
+        name: tempRole.name,
+        branchID: 1,
+        permissions: permissionIds,
+      };
+
+      await api.post("/RolePermission", payload);
+
+      setTempRole(null);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error saving role:", error);
+    }
   };
 
   // =============================
@@ -96,16 +128,16 @@ const RoleManagement: React.FC = () => {
         </div>
 
         <div className="flex-1 space-y-2">
-          {roles.map(role => (
+          {roles.map((role) => (
             <div
               key={role.id}
               onClick={() => setSelectedRole(role)}
               className={`p-3 cursor-pointer rounded flex justify-between items-center
-                ${selectedRole.id === role.id ? "bg-indigo-50" : ""}
+                ${selectedRole?.id === role.id ? "bg-indigo-50" : ""}
               `}
             >
               <span className="text-sm font-medium">{role.name}</span>
-              {role.isSystem && <Lock size={14} className="text-slate-400" />}
+              {role?.isSystem && <Lock size={14} className="text-slate-400" />}
             </div>
           ))}
         </div>
@@ -120,8 +152,8 @@ const RoleManagement: React.FC = () => {
                 <input
                   value={tempRole?.name}
                   onChange={(e) =>
-                    setTempRole(prev =>
-                      prev ? { ...prev, name: e.target.value } : null
+                    setTempRole((prev) =>
+                      prev ? { ...prev, name: e.target.value } : null,
                     )
                   }
                   className="text-xl font-bold border rounded px-2 py-1 w-full mb-2"
@@ -130,8 +162,8 @@ const RoleManagement: React.FC = () => {
                 <textarea
                   value={tempRole?.description}
                   onChange={(e) =>
-                    setTempRole(prev =>
-                      prev ? { ...prev, description: e.target.value } : null
+                    setTempRole((prev) =>
+                      prev ? { ...prev, description: e.target.value } : null,
                     )
                   }
                   className="text-sm border rounded px-2 py-1 w-full"
@@ -140,13 +172,13 @@ const RoleManagement: React.FC = () => {
             ) : (
               <>
                 <h2 className="text-xl font-bold flex items-center gap-2">
-                  {currentRole.name}
-                  {currentRole.isSystem && (
+                  {currentRole?.name}
+                  {currentRole?.isSystem && (
                     <Lock size={16} className="text-slate-400" />
                   )}
                 </h2>
                 <p className="text-sm text-slate-500">
-                  {currentRole.description}
+                  {currentRole?.description}
                 </p>
               </>
             )}
@@ -170,7 +202,7 @@ const RoleManagement: React.FC = () => {
               </>
             ) : (
               <>
-                {!selectedRole.isSystem && (
+                {!selectedRole?.isSystem && (
                   <button
                     onClick={handleDeleteRole}
                     className="px-3 py-2 text-red-500 hover:bg-red-50 rounded"
@@ -191,14 +223,14 @@ const RoleManagement: React.FC = () => {
         </div>
 
         {/* PERMISSIONS */}
-        {currentRole.permissions.includes("all") ? (
+        {currentRole?.permissions.includes("all") ? (
           <div className="p-6 bg-indigo-50 rounded">
             Full Administrator Access
           </div>
         ) : (
           <PermissionTree
             nodes={PERMISSION_TREE}
-            selected={currentRole.permissions}
+            selected={currentRole?.permissions ?? []}
             setSelected={setPermissions}
             isEditing={isEditing}
           />

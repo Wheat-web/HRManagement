@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { usePermission } from "../context/PermissionContext";
 import {
   LayoutDashboard,
   Users,
@@ -67,6 +68,7 @@ const Layout: React.FC<LayoutProps> = ({
   const [selectedBranchId, setSelectedBranchId] = useState<number | "all">(
     "all",
   );
+  const { hasPermission } = usePermission();
 
   useEffect(() => {
     loadBranches();
@@ -82,147 +84,122 @@ const Layout: React.FC<LayoutProps> = ({
   };
 
   const getMenuItems = (): MenuItem[] => {
-    if (user.role === Role.CANDIDATE) {
-      return [
-        { id: "jobs", label: "Job Board", icon: <Briefcase size={20} /> },
-        {
-          id: "applications",
-          label: "My Applications",
-          icon: <FileText size={20} />,
-        },
-        {
-          id: "messages",
-          label: "Inbox",
-          icon: <Mail size={20} />,
-          badge: unreadMessagesCount,
-        },
-      ];
-    }
+    const items: MenuItem[] = [];
 
-    const baseItems: MenuItem[] = [
-      {
+    if (hasPermission("dashboard.view"))
+      items.push({
         id: "dashboard",
         label: "Dashboard",
         icon: <LayoutDashboard size={20} />,
-      },
-    ];
+      });
 
-    if (user.role === Role.EMPLOYEE) {
-      return [
-        ...baseItems,
-        { id: "hrops", label: "HR Portal", icon: <Briefcase size={20} /> },
-        {
-          id: "messages",
-          label: "My Inbox",
-          icon: <Mail size={20} />,
-          badge: unreadMessagesCount,
-        },
-      ];
-    }
+    if (hasPermission("recruitment.view"))
+      items.push({
+        id: "recruitment",
+        label: "Recruitment",
+        icon: <Users size={20} />,
+      });
 
-    // Admin/Recruiter/Manager items
-    const opsItems: MenuItem[] = [
-      { id: "recruitment", label: "Recruitment", icon: <Users size={20} /> },
-      { id: "schedule", label: "Interviews", icon: <Briefcase size={20} /> },
-    ];
+    if (hasPermission("interview.view"))
+      items.push({
+        id: "schedule",
+        label: "Interviews",
+        icon: <Briefcase size={20} />,
+      });
 
-    if (
-      user.role === Role.HR_ADMIN ||
-      user.role === Role.COMPANY_ADMIN ||
-      user.role === Role.MANAGER
-    ) {
-      opsItems.push({
+    if (hasPermission("onboarding.view"))
+      items.push({
         id: "onboarding",
         label: "Onboarding Hub",
         icon: <UserPlus size={20} />,
       });
-      opsItems.push({
+
+    if (hasPermission("payroll.view"))
+      items.push({
         id: "payroll",
         label: "Payroll",
         icon: <CreditCard size={20} />,
       });
-      opsItems.push({
+
+    if (hasPermission("salary.view"))
+      items.push({
         id: "salary",
         label: "Salary Management",
         icon: <DollarSign size={20} />,
       });
-      opsItems.push({
-        id: "productivity",
-        label: "Productivity",
-        icon: <TrendingUp size={20} />,
-      });
-    }
 
-    if (user.role === Role.HR_ADMIN || user.role === Role.COMPANY_ADMIN) {
-      opsItems.push({
+    if (hasPermission("branches.view"))
+      items.push({
         id: "branches",
         label: "Branch Management",
         icon: <Globe size={20} />,
       });
-      opsItems.push({
+
+    if (hasPermission("employees.view"))
+      items.push({
         id: "employees",
         label: "Employee Directory",
         icon: <BookUser size={20} />,
       });
-      opsItems.push({
+
+    if (hasPermission("shifts.view"))
+      items.push({
         id: "shifts",
         label: "Shift Management",
         icon: <Clock size={20} />,
       });
-      opsItems.push({
+
+    if (hasPermission("attendance.view"))
+      items.push({
         id: "attendance",
         label: "Attendance",
         icon: <CalendarCheck size={20} />,
       });
-      opsItems.push({
-        id: "messages",
-        label: "Official Mail",
-        icon: <Mail size={20} />,
-        badge: unreadMessagesCount,
-      });
-      opsItems.push({
-        id: "planner",
-        label: "Recruitment Planner",
-        icon: <CalendarRange size={20} />,
-      });
-      opsItems.push({
-        id: "department",
-        label: "Department",
-        icon: <Building2 size={20} />,
-      });
-      opsItems.push({
+
+    if (hasPermission("roles.view"))
+      items.push({
         id: "roles",
         label: "Roles & Permissions",
         icon: <Lock size={20} />,
       });
-      opsItems.push({
+
+    if (hasPermission("reports.view"))
+      items.push({
         id: "reports",
         label: "Reports",
         icon: <BarChart3 size={20} />,
       });
-      opsItems.push({
-        id: "hrops",
-        label: "HR Operations",
-        icon: <ClipboardList size={20} />,
-      });
-      opsItems.push({
+
+    if (hasPermission("compliance.view"))
+      items.push({
         id: "compliance",
-        label: "Compliance & Audit",
+        label: "Compliance",
         icon: <ShieldCheck size={20} />,
       });
-      opsItems.push({
+
+    if (hasPermission("policies.view"))
+      items.push({
         id: "policies",
         label: "Policies",
         icon: <FileText size={20} />,
       });
-      opsItems.push({
-        id: "register_org",
-        label: "Register New Org",
-        icon: <PlusCircle size={20} />,
-      });
-    }
 
-    return [...baseItems, ...opsItems];
+    if (hasPermission("planner.view"))
+      items.push({
+        id: "planner",
+        label: "Recruitment Planner",
+        icon: <CalendarRange size={20} />,
+      });
+
+    if (hasPermission("messages.view"))
+      items.push({
+        id: "messages",
+        label: "Inbox",
+        icon: <Mail size={20} />,
+        badge: unreadMessagesCount,
+      });
+
+    return items;
   };
 
   const navItems = getMenuItems();
