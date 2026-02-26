@@ -19,6 +19,7 @@ const RoleManagement: React.FC = () => {
 
   useEffect(() => {
     loadPermissions();
+    loadRoles();
   }, []);
 
   const loadPermissions = async () => {
@@ -31,15 +32,30 @@ const RoleManagement: React.FC = () => {
   };
 
   const loadRoles = async () => {
-    
-  }
+    try {
+      const res = await api.get("/RolePermission/roles");
 
-  // =============================
-  // CREATE ROLE
-  // =============================
+      const formattedRoles: RoleDefinition[] = res.data.map((r: any) => ({
+        id: r.id?.toString() ?? r.roleId?.toString(),
+        name: r.roleName ?? r.name ?? "",
+        description: "",
+        usersCount: 0,
+        isSystem: false,
+        permissions: [], // ✅ IMPORTANT
+      }));
+
+      setRoles(formattedRoles);
+
+      if (formattedRoles.length > 0) {
+        setSelectedRole(formattedRoles[0]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const handleCreateRole = () => {
     const newRole: RoleDefinition = {
-      id: "", // empty means not saved yet
+      id: "",
       name: "",
       description: "",
       usersCount: 0,
@@ -51,9 +67,6 @@ const RoleManagement: React.FC = () => {
     setIsEditing(true);
   };
 
-  // =============================
-  // DELETE ROLE
-  // =============================
   const handleDeleteRole = () => {
     if (!selectedRole || selectedRole.isSystem) return;
 
@@ -64,9 +77,6 @@ const RoleManagement: React.FC = () => {
     setTempRole(null);
   };
 
-  // =============================
-  // EDIT TOGGLE
-  // =============================
   const handleEditToggle = () => {
     if (isEditing) {
       setTempRole(null);
@@ -133,8 +143,8 @@ const RoleManagement: React.FC = () => {
               key={role.id}
               onClick={() => setSelectedRole(role)}
               className={`p-3 cursor-pointer rounded flex justify-between items-center
-                ${selectedRole?.id === role.id ? "bg-indigo-50" : ""}
-              `}
+                  ${selectedRole?.id === role.id ? "bg-indigo-50" : ""}
+                `}
             >
               <span className="text-sm font-medium">{role.name}</span>
               {role?.isSystem && <Lock size={14} className="text-slate-400" />}
@@ -223,7 +233,7 @@ const RoleManagement: React.FC = () => {
         </div>
 
         {/* PERMISSIONS */}
-        {currentRole?.permissions.includes("all") ? (
+        {currentRole?.permissions?.includes("all") ? (
           <div className="p-6 bg-indigo-50 rounded">
             Full Administrator Access
           </div>

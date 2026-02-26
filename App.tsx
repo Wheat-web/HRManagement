@@ -59,24 +59,24 @@ function App() {
   const [authView, setAuthView] = useState<"login" | "signup">("login");
 
   const [currentView, setCurrentView] = useState("dashboard");
-  const [branches, setBranches] = useState<Branch[]>(MOCK_BRANCHES);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<string>("all");
 
-  const [candidates, setCandidates] = useState<Candidate[]>(MOCK_CANDIDATES);
-  const [jobs, setJobs] = useState<JobOpening[]>(MOCK_JOBS);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [jobs, setJobs] = useState<JobOpening[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
     null,
   );
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
-  const [employees, setEmployees] = useState<Employee[]>(MOCK_EMPLOYEES);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] =
     useState<Department[]>(MOCK_DEPARTMENTS);
 
   const [payrollRecords, setPayrollRecords] =
     useState<PayrollRecord[]>(MOCK_PAYROLL);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(MOCK_AUDIT_LOGS);
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
 
   useEffect(() => {
