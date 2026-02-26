@@ -41,7 +41,7 @@ const RoleManagement: React.FC = () => {
         description: "",
         usersCount: 0,
         isSystem: false,
-        permissions: [], // ✅ IMPORTANT
+        permissions: [],
       }));
 
       setRoles(formattedRoles);
@@ -91,7 +91,6 @@ const RoleManagement: React.FC = () => {
     if (!tempRole) return;
 
     try {
-      // Convert selected codes → PermissionID
       const permissionIds = tempRole?.permissions
         .filter((p) => p !== "all")
         .map((code) => {
@@ -99,6 +98,8 @@ const RoleManagement: React.FC = () => {
           return found ? { permissionID: found.id } : null;
         })
         .filter(Boolean);
+
+      console.log(permissionIds, "pererfwerfwerfwerf");
 
       const payload = {
         name: tempRole.name,
@@ -115,12 +116,25 @@ const RoleManagement: React.FC = () => {
     }
   };
 
-  // =============================
-  // UPDATE PERMISSIONS
-  // =============================
   const setPermissions = (perms: string[]) => {
     if (!tempRole) return;
     setTempRole({ ...tempRole, permissions: perms });
+  };
+
+  const handleSelectRole = async (role: RoleDefinition) => {
+    try {
+      setSelectedRole(role);
+
+      const res = await api.get(`/RolePermission/permission/${role.id}`);
+
+      const permissionCodes = res.data.map((p: any) => p.code.toLowerCase());
+      setSelectedRole({
+        ...role,
+        permissions: permissionCodes,
+      });
+    } catch (err) {
+      console.error("Error loading role permissions:", err);
+    }
   };
 
   return (
@@ -141,7 +155,7 @@ const RoleManagement: React.FC = () => {
           {roles.map((role) => (
             <div
               key={role.id}
-              onClick={() => setSelectedRole(role)}
+              onClick={() => handleSelectRole(role)}
               className={`p-3 cursor-pointer rounded flex justify-between items-center
                   ${selectedRole?.id === role.id ? "bg-indigo-50" : ""}
                 `}
