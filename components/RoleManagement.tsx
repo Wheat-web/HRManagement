@@ -109,6 +109,7 @@ const RoleManagement: React.FC = () => {
 
       await api.post("/RolePermission", payload);
 
+      loadRoles()
       setTempRole(null);
       setIsEditing(false);
     } catch (error) {
