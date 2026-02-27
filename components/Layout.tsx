@@ -95,19 +95,19 @@ const Layout: React.FC<LayoutProps> = ({
       });
 
     // Candidate
-    if (hasPermission("jobs.view"))
+    // if (hasPermission("jobs.view"))
       items.push({
         id: "jobs",
         label: "Job Board",
         icon: <Briefcase size={20} />,
       });
 
-    if (hasPermission("applications.view"))
-      items.push({
-        id: "applications",
-        label: "My Applications",
-        icon: <FileText size={20} />,
-      });
+    // // if (hasPermission("applications.view"))
+    //   items.push({
+    //     id: "applications",
+    //     label: "My Applications",
+    //     icon: <FileText size={20} />,
+    //   });
 
     // Recruitment
     if (hasPermission("recruitment.view"))
