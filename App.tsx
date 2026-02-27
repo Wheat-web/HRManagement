@@ -53,6 +53,7 @@ import { ToastProvider } from "./context/ToastContext";
 import { PermissionContext } from "./context/PermissionContext";
 import api from "./services/api";
 import { jwtDecode } from "jwt-decode";
+import UserManagement from "./components/UserManagement";
 
 function App() {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -70,14 +71,13 @@ function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [departments, setDepartments] =
-    useState<Department[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
 
-  const [payrollRecords, setPayrollRecords] =
-    useState<PayrollRecord[]>([]);
+  const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -167,6 +167,27 @@ function App() {
       `${newCandidate.name} applied for Job ID: ${jobId}`,
       false,
     );
+  };
+
+  const handleAddUser = (newUser: UserProfile) => {
+    setUsers((prev) => [newUser, ...prev]);
+    addAuditLog(
+      "User Management",
+      `Created new user: ${newUser.name} (${newUser.role})`,
+      false,
+    );
+  };
+
+  const handleUpdateUser = (updatedUser: UserProfile) => {
+    setUsers((prev) =>
+      prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)),
+    );
+    addAuditLog("User Management", `Updated user: ${updatedUser.name}`, false);
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+    addAuditLog("User Management", `Deleted user ID: ${userId}`, true);
   };
 
   const handleAddJob = (newJob: JobOpening) => {
@@ -374,7 +395,6 @@ function App() {
     return permissions.includes(code);
   };
 
-  
   const renderContent = () => {
     switch (currentView) {
       case "dashboard":
@@ -405,6 +425,16 @@ function App() {
             currentUser={user!}
             applications={candidates}
             onApply={handleApplyJob}
+          />
+        );
+      case "users":
+        return (
+          <UserManagement
+            users={users}
+            branches={branches}
+            onAddUser={handleAddUser}
+            onUpdateUser={handleUpdateUser}
+            onDeleteUser={handleDeleteUser}
           />
         );
       case "recruitment":
