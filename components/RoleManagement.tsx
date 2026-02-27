@@ -4,6 +4,7 @@ import { Permission, RoleDefinition } from "../types";
 import PermissionTree from "./PermissionTree";
 import { Plus, Trash2, Lock } from "lucide-react";
 import api from "@/services/api";
+import { useToast } from "@/context/ToastContext";
 
 const RoleManagement: React.FC = () => {
   // const [roles, setRoles] = useState<[]>([]);
@@ -14,6 +15,7 @@ const RoleManagement: React.FC = () => {
   const [roles, setRoles] = useState<RoleDefinition[]>([]);
   const [selectedRole, setSelectedRole] = useState<RoleDefinition | null>(null);
   const [tempRole, setTempRole] = useState<RoleDefinition | null>(null);
+  const { showToast } = useToast();
 
   const currentRole = isEditing && tempRole ? tempRole : selectedRole;
 
@@ -50,7 +52,7 @@ const RoleManagement: React.FC = () => {
         setSelectedRole(formattedRoles[0]);
       }
     } catch (err) {
-      console.error(err);
+      console.log(err);
     }
   };
   const handleCreateRole = () => {
@@ -87,44 +89,41 @@ const RoleManagement: React.FC = () => {
     }
   };
 
-const handleSave = async () => {
-  if (!tempRole) return;
+  const handleSave = async () => {
+    if (!tempRole) return;
 
-  try {
-    const permissionIds = tempRole.permissions
-      .filter((p) => p !== "all")
-      .map((code) => {
-        const found = allPermissions.find((ap) => ap.code === code);
-        return found ? found.id : null;
-      })
-      .filter((id) => id !== null);
+    try {
+      const permissionIds = tempRole.permissions
+        .filter((p) => p !== "all")
+        .map((code) => {
+          const found = allPermissions.find((ap) => ap.code === code);
+          return found ? found.id : null;
+        })
+        .filter((id) => id !== null);
 
-    if (!tempRole.id) {
-      const payload = {
-        name: tempRole.name,
-        branchID: 1,
-        permissions: permissionIds.map((id) => ({
-          permissionID: id,
-        })),
-      };
+      if (!tempRole.id) {
+        const payload = {
+          name: tempRole.name,
+          branchID: 1,
+          permissions: permissionIds.map((id) => ({
+            permissionID: id,
+          })),
+        };
 
-      await api.post("/RolePermission", payload);
-    } else {
-      await api.post(
-        `/RolePermission/permission/${tempRole.id}`,
-        {
+        await api.post("/RolePermission", payload);
+      } else {
+        await api.post(`/RolePermission/permission/${tempRole.id}`, {
           permissions: permissionIds,
-        }
-      );
-    }
+        });
+      }
 
-    await loadRoles();
-    setTempRole(null);
-    setIsEditing(false);
-  } catch (error) {
-    console.error("Error saving role:", error);
-  }
-};
+      await loadRoles();
+      setTempRole(null);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error saving role:", error);
+    }
+  };
 
   const setPermissions = (perms: string[]) => {
     if (!tempRole) return;
@@ -143,7 +142,7 @@ const handleSave = async () => {
         permissions: permissionCodes,
       });
     } catch (err) {
-      console.error("Error loading role permissions:", err);
+      showToast("No Permissions assigned", "error");
     }
   };
 

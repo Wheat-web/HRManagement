@@ -86,6 +86,7 @@ const Layout: React.FC<LayoutProps> = ({
   const getMenuItems = (): MenuItem[] => {
     const items: MenuItem[] = [];
 
+    // Dashboard
     if (hasPermission("dashboard.view"))
       items.push({
         id: "dashboard",
@@ -93,6 +94,22 @@ const Layout: React.FC<LayoutProps> = ({
         icon: <LayoutDashboard size={20} />,
       });
 
+    // Candidate
+    if (hasPermission("jobs.view"))
+      items.push({
+        id: "jobs",
+        label: "Job Board",
+        icon: <Briefcase size={20} />,
+      });
+
+    if (hasPermission("applications.view"))
+      items.push({
+        id: "applications",
+        label: "My Applications",
+        icon: <FileText size={20} />,
+      });
+
+    // Recruitment
     if (hasPermission("recruitment.view"))
       items.push({
         id: "recruitment",
@@ -100,7 +117,7 @@ const Layout: React.FC<LayoutProps> = ({
         icon: <Users size={20} />,
       });
 
-    if (hasPermission("interview.view"))
+    if (hasPermission("interviews.view"))
       items.push({
         id: "schedule",
         label: "Interviews",
@@ -114,6 +131,36 @@ const Layout: React.FC<LayoutProps> = ({
         icon: <UserPlus size={20} />,
       });
 
+    if (hasPermission("planner.view"))
+      items.push({
+        id: "planner",
+        label: "Recruitment Planner",
+        icon: <CalendarRange size={20} />,
+      });
+
+    // HR
+    if (hasPermission("hrops.view"))
+      items.push({
+        id: "hrops",
+        label: "HR Operations",
+        icon: <ClipboardList size={20} />,
+      });
+
+    if (hasPermission("productivity.view"))
+      items.push({
+        id: "productivity",
+        label: "Productivity",
+        icon: <TrendingUp size={20} />,
+      });
+
+    if (hasPermission("department.view"))
+      items.push({
+        id: "department",
+        label: "Department",
+        icon: <Building2 size={20} />,
+      });
+
+    // Payroll
     if (hasPermission("payroll.view"))
       items.push({
         id: "payroll",
@@ -128,6 +175,7 @@ const Layout: React.FC<LayoutProps> = ({
         icon: <DollarSign size={20} />,
       });
 
+    // Organization
     if (hasPermission("branches.view"))
       items.push({
         id: "branches",
@@ -156,6 +204,7 @@ const Layout: React.FC<LayoutProps> = ({
         icon: <CalendarCheck size={20} />,
       });
 
+    // Admin
     if (hasPermission("roles.view"))
       items.push({
         id: "roles",
@@ -173,7 +222,7 @@ const Layout: React.FC<LayoutProps> = ({
     if (hasPermission("compliance.view"))
       items.push({
         id: "compliance",
-        label: "Compliance",
+        label: "Compliance & Audit",
         icon: <ShieldCheck size={20} />,
       });
 
@@ -184,19 +233,11 @@ const Layout: React.FC<LayoutProps> = ({
         icon: <FileText size={20} />,
       });
 
-    if (hasPermission("planner.view"))
+    if (hasPermission("register_org.view"))
       items.push({
-        id: "planner",
-        label: "Recruitment Planner",
-        icon: <CalendarRange size={20} />,
-      });
-
-    if (hasPermission("messages.view"))
-      items.push({
-        id: "messages",
-        label: "Inbox",
-        icon: <Mail size={20} />,
-        badge: unreadMessagesCount,
+        id: "register_org",
+        label: "Register New Org",
+        icon: <PlusCircle size={20} />,
       });
 
     return items;
