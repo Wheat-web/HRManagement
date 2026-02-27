@@ -87,35 +87,44 @@ const RoleManagement: React.FC = () => {
     }
   };
 
-  const handleSave = async () => {
-    if (!tempRole) return;
+const handleSave = async () => {
+  if (!tempRole) return;
 
-    try {
-      const permissionIds = tempRole?.permissions
-        .filter((p) => p !== "all")
-        .map((code) => {
-          const found = allPermissions.find((ap) => ap.code === code);
-          return found ? { permissionID: found.id } : null;
-        })
-        .filter(Boolean);
+  try {
+    const permissionIds = tempRole.permissions
+      .filter((p) => p !== "all")
+      .map((code) => {
+        const found = allPermissions.find((ap) => ap.code === code);
+        return found ? found.id : null;
+      })
+      .filter((id) => id !== null);
 
-      console.log(permissionIds, "pererfwerfwerfwerf");
-
+    if (!tempRole.id) {
       const payload = {
         name: tempRole.name,
         branchID: 1,
-        permissions: permissionIds,
+        permissions: permissionIds.map((id) => ({
+          permissionID: id,
+        })),
       };
 
       await api.post("/RolePermission", payload);
-
-      loadRoles()
-      setTempRole(null);
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Error saving role:", error);
+    } else {
+      await api.post(
+        `/RolePermission/permission/${tempRole.id}`,
+        {
+          permissions: permissionIds,
+        }
+      );
     }
-  };
+
+    await loadRoles();
+    setTempRole(null);
+    setIsEditing(false);
+  } catch (error) {
+    console.error("Error saving role:", error);
+  }
+};
 
   const setPermissions = (perms: string[]) => {
     if (!tempRole) return;

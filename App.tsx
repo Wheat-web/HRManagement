@@ -71,10 +71,10 @@ function App() {
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] =
-    useState<Department[]>(MOCK_DEPARTMENTS);
+    useState<Department[]>([]);
 
   const [payrollRecords, setPayrollRecords] =
-    useState<PayrollRecord[]>(MOCK_PAYROLL);
+    useState<PayrollRecord[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
