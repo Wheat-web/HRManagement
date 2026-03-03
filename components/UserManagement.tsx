@@ -12,6 +12,8 @@ import {
   CheckCircle2,
   X,
   RefreshCw,
+  PowerOff,
+  Power,
 } from "lucide-react";
 import { getUserRoleCombo, UserRoleCombo } from "../services/roleService";
 import { getBranchCombo, BranchCombo } from "../services/branchService";
@@ -143,17 +145,35 @@ const UserManagement = () => {
         branchID: formData.branchID ? Number(formData.branchID) : null,
       };
 
-      console.log(payload, "payloaaaaaaaaaaaaaaaaaaaaaaaaad");
+      if (editingUser) {
+        await api.put(`/User/${editingUser.id}`, payload);
+        showToast("User updated successfully", "success");
+      } else {
+        await api.post("/User", payload);
+        showToast("User created successfully", "success");
+      }
 
-      await api.post("/User", payload);
       await loadUsers();
-      showToast("Employee updated successfully", "success");
       setIsModalOpen(false);
     } catch (error: any) {
       showToast(
         error?.response?.data?.message || "Something went wrong",
         "error",
       );
+    }
+  };
+
+  const handleToggleStatus = async (user: UserProfile) => {
+    try {
+      const newStatus = !user.isActive;
+      await api.put(`/User/${user.id}/Status/${newStatus}`);
+      showToast(
+        `User ${newStatus ? "activated" : "deactivated"} successfully`,
+        "success",
+      );
+      await loadUsers();
+    } catch (error) {
+      showToast("Failed to Update", "error");
     }
   };
 
@@ -329,10 +349,17 @@ const UserManagement = () => {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 text-emerald-600 font-medium text-xs">
-                        <CheckCircle2 size={14} />
-                        Active
-                      </div>
+                      {user.isActive ? (
+                        <div className="flex items-center gap-1.5 text-emerald-600 font-medium text-xs">
+                          <CheckCircle2 size={14} />
+                          Active
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-amber-600 font-medium text-xs">
+                          <PowerOff size={14} />
+                          Inactive
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -343,10 +370,18 @@ const UserManagement = () => {
                           <Edit2 size={16} />
                         </button>
                         <button
-                          onClick={() => handleDelete(user.id)}
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          onClick={() => handleToggleStatus(user)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            user.isActive
+                              ? "text-emerald-600 hover:bg-emerald-50"
+                              : "text-amber-600 hover:bg-amber-50"
+                          }`}
                         >
-                          <Trash2 size={16} />
+                          {user.isActive ? (
+                            <PowerOff size={16} />
+                          ) : (
+                            <Power size={16} />
+                          )}
                         </button>
                       </div>
                     </td>

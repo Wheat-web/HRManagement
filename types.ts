@@ -23,6 +23,7 @@ export interface UserProfile {
   password: string; 
   roleID?: number;
   branchId?: number; // If user is restricted to a branch
+  isActive : boolean;
 }
 
 export interface Branch {
