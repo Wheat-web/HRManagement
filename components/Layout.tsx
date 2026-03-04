@@ -108,7 +108,7 @@ const Layout: React.FC<LayoutProps> = ({
       label: "My Applications",
       icon: <FileText size={20} />,
     });
-    
+
     items.push({
       id: "users",
       label: "User Management",
@@ -245,6 +245,12 @@ const Layout: React.FC<LayoutProps> = ({
         icon: <PlusCircle size={20} />,
       });
 
+    if (hasPermission("messages.view"))
+      items.push({
+        id: "messages",
+        label: "Messages",
+        icon: <Mail size={20} />,
+      });
     return items;
   };
 

@@ -1,28 +1,44 @@
 
 import React, { useState } from 'react';
 import { MOCK_HR_REQUESTS, MOCK_POLICIES, MOCK_EMPLOYEES, MOCK_LETTER_TEMPLATES, MOCK_SHIFTS, MOCK_PAYROLL, MOCK_ATTENDANCE } from '../constants';
-import { HROpsRequest, Role, AttendanceRecord, Message, PayrollRecord } from '../types';
+import { HROpsRequest, Role, AttendanceRecord, Message, PayrollRecord, UserProfile } from '../types';
 import { Search, Send, FileQuestion, CreditCard, CalendarDays, ChevronRight, Check, X, ClipboardList, User, DollarSign, FileText, Briefcase, Mail, PenTool, Printer, Bot, Clock, Wallet, Inbox, Calendar, Wand2, AlertTriangle, CheckCircle, TrendingUp, History, ArrowLeft, Loader2 } from 'lucide-react';
 import { answerPolicyQuestion, analyzeLeaveRequest } from '../services/geminiService';
 import { useToast } from '../context/ToastContext';
 
 interface HROpsProps {
   role: Role;
+  user?: UserProfile; // Added user prop
   onSendMessage?: (msg: Message) => void;
   payrollRecords?: PayrollRecord[];
   onProcessPayroll?: (ids: string[]) => void;
 }
 
-const HROps: React.FC<HROpsProps> = ({ role, onSendMessage, payrollRecords = MOCK_PAYROLL, onProcessPayroll }) => {
+const HROps: React.FC<HROpsProps> = ({ role, user, onSendMessage, payrollRecords = MOCK_PAYROLL, onProcessPayroll }) => {
   const { showToast } = useToast();
   const isAdmin = role === Role.COMPANY_ADMIN || role === Role.HR_ADMIN;
+  
+  // Use passed user or fallback to mock employee for demo
+  const currentUser = user ? {
+    ...MOCK_EMPLOYEES.find(e => e.email === user.email) || [][0], // Try to find employee record by email
+    name: user.name,
+    id: user.id,
+    role: user.role
+  } : (MOCK_EMPLOYEES.find(e => e.id === 'e1') || [][0]);
+
   // Initialize default view based on Role
-  const [activeView, setActiveView] = useState<'overview' | 'payroll' | 'communication' | 'attendance'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'payroll' | 'communication' | 'attendance' | 'leave'>('overview');
   const [query, setQuery] = useState('');
   const [answer, setAnswer] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [requests, setRequests] = useState<HROpsRequest[]>(MOCK_HR_REQUESTS);
+  const [requests, setRequests] = useState<HROpsRequest[]>([]);
   const [analyzingIds, setAnalyzingIds] = useState<string[]>([]);
+
+  // Leave Application State
+  const [leaveType, setLeaveType] = useState<'Annual' | 'Sick' | 'Unpaid' | 'Maternity' | 'Paternity' | 'Bereavement'>('Annual');
+  const [leaveStartDate, setLeaveStartDate] = useState('');
+  const [leaveEndDate, setLeaveEndDate] = useState('');
+  const [leaveReason, setLeaveReason] = useState('');
 
   // Advance Payment State
   const [advanceAmount, setAdvanceAmount] = useState('');
@@ -40,11 +56,9 @@ const HROps: React.FC<HROpsProps> = ({ role, onSendMessage, payrollRecords = MOC
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   
   // Employee Attendance State
-  const [employeeAttendance] = useState<AttendanceRecord[]>(MOCK_ATTENDANCE);
+  const [employeeAttendance] = useState<AttendanceRecord[]>([]);
 
   
-  // Use "Jane Doe" as the logged-in employee for demo purposes
-  const currentUser = MOCK_EMPLOYEES.find(e => e.id === 'e1') || MOCK_EMPLOYEES[0];
   const currentShift = MOCK_SHIFTS.find(s => s.id === currentUser.shiftId);
   const latestPayroll = payrollRecords.find(p => p.employeeId === currentUser.id && p.period === 'Oct 2023');
   const payrollHistory = payrollRecords.filter(p => p.employeeId === currentUser.id).sort((a,b) => b.paymentDate && a.paymentDate ? b.paymentDate.localeCompare(a.paymentDate) : 0);
@@ -92,6 +106,27 @@ const HROps: React.FC<HROpsProps> = ({ role, onSendMessage, payrollRecords = MOC
     } finally {
       setAnalyzingIds(prev => prev.filter(id => id !== req.id));
     }
+  };
+
+  const handleSubmitLeave = () => {
+    if (!leaveStartDate || !leaveEndDate || !leaveReason) return;
+
+    const newRequest: HROpsRequest = {
+      id: `lv_${Date.now()}`,
+      type: 'Leave',
+      status: 'Pending',
+      description: `${leaveType} Leave: ${leaveReason} (${leaveStartDate} to ${leaveEndDate})`,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      employeeName: currentUser.name
+    };
+
+    setRequests(prev => [newRequest, ...prev]);
+    setLeaveStartDate('');
+    setLeaveEndDate('');
+    setLeaveReason('');
+    setLeaveType('Annual');
+    showToast('Leave request submitted successfully!', 'success');
+    setActiveView('overview');
   };
 
   const handleSubmitAdvance = () => {
@@ -178,7 +213,7 @@ const HROps: React.FC<HROpsProps> = ({ role, onSendMessage, payrollRecords = MOC
     if (isAdmin) {
       return ['overview'];
     }
-    return ['overview', 'attendance', 'payroll', 'communication'];
+    return ['overview', 'leave', 'attendance', 'payroll', 'communication'];
   };
 
   return (
@@ -246,9 +281,9 @@ const HROps: React.FC<HROpsProps> = ({ role, onSendMessage, payrollRecords = MOC
             ) : (
               <>
                 {[
-                  { label: 'Apply Leave', icon: <CalendarDays className="text-indigo-600" /> },
-                  { label: 'View Payslip', icon: <CreditCard className="text-emerald-600" /> },
-                  { label: 'Policy Query', icon: <FileQuestion className="text-blue-600" /> },
+                  { label: 'Apply Leave', icon: <CalendarDays className="text-indigo-600" />, action: () => setActiveView('leave') },
+                  { label: 'View Payslip', icon: <CreditCard className="text-emerald-600" />, action: () => setActiveView('payroll') },
+                  { label: 'Policy Query', icon: <FileQuestion className="text-blue-600" />, action: () => {} },
                   { label: 'Request Advance', icon: <TrendingUp className="text-emerald-600" />, action: () => setActiveView('payroll') },
                   { label: 'Request Letter', icon: <FileText className="text-purple-600" />, action: () => setActiveView('communication') },
                 ].map((action, i) => (
@@ -420,6 +455,118 @@ const HROps: React.FC<HROpsProps> = ({ role, onSendMessage, payrollRecords = MOC
             </div>
           </div>
         </>
+      )}
+
+      {/* Leave Application View */}
+      {!isAdmin && activeView === 'leave' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-2">
+          {/* Leave Application Form */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <CalendarDays size={18} /> Apply for Leave
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Leave Type</label>
+                <select 
+                  value={leaveType}
+                  onChange={(e) => setLeaveType(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                >
+                  <option value="Annual">Annual Leave</option>
+                  <option value="Sick">Sick Leave</option>
+                  <option value="Unpaid">Unpaid Leave</option>
+                  <option value="Maternity">Maternity Leave</option>
+                  <option value="Paternity">Paternity Leave</option>
+                  <option value="Bereavement">Bereavement Leave</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Start Date</label>
+                  <input 
+                    type="date"
+                    value={leaveStartDate}
+                    onChange={(e) => setLeaveStartDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">End Date</label>
+                  <input 
+                    type="date"
+                    value={leaveEndDate}
+                    onChange={(e) => setLeaveEndDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Reason</label>
+                <textarea
+                  value={leaveReason}
+                  onChange={(e) => setLeaveReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 h-24 resize-none"
+                  placeholder="Please provide a reason for your leave request..."
+                />
+              </div>
+
+              <div className="pt-4">
+                <button 
+                  onClick={handleSubmitLeave}
+                  disabled={!leaveStartDate || !leaveEndDate || !leaveReason}
+                  className="w-full bg-indigo-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Send size={16} /> Submit Leave Request
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Leave History */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col h-full">
+            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <History size={18} /> Leave History
+            </h3>
+            
+            <div className="flex-1 overflow-y-auto pr-2 space-y-3 max-h-[400px]">
+              {requests.filter(r => r.type === 'Leave' && r.employeeName === currentUser.name).length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-slate-400 py-8">
+                  <CalendarDays size={32} className="mb-2 opacity-50" />
+                  <p className="text-sm">No leave history found.</p>
+                </div>
+              ) : (
+                requests
+                  .filter(r => r.type === 'Leave' && r.employeeName === currentUser.name)
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .map(req => (
+                  <div key={req.id} className="p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors group">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="font-bold text-slate-800 text-sm">{req.date}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                        req.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
+                        req.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                      }`}>
+                        {req.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 mb-1 font-medium">{req.description.split(':')[0]}</p>
+                    <p className="text-xs text-slate-500 line-clamp-2">{req.description.split(':').slice(1).join(':').trim()}</p>
+                    
+                    {req.aiAssessment && (
+                      <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1 text-[10px] text-slate-400">
+                        <Bot size={10} /> AI Analysis: {req.aiAssessment.recommendation}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Employee Attendance View and other views unchanged ... */}
