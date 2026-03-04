@@ -40,19 +40,21 @@ import {
   DepartmentCombo,
   getDepartmentCombo,
 } from "@/services/departmentService";
+import { BranchCombo, getBranchCombo } from "@/services/branchService";
+import { getShiftCombo, ShiftCombo } from "@/services/shiftService";
 
 interface EmployeeManagementProps {
   // initialEmployees: Employee[];
-  branches: Branch[];
-  departments: Department[];
-  candidates?: Candidate[];
+  // branches: Branch[];
+  // departments: Department[];
+  // candidates?: Candidate[];
   onAddEmployee?: (emp: Employee) => void;
   selectedBranchId?: string;
 }
 
 const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
   // initialEmployees,
-  branches,
+  // branches,
   // departments,
   candidates = [],
   onAddEmployee,
@@ -64,6 +66,8 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
   const [filterDept, setFilterDept] = useState("All");
   const [loading, setLoading] = useState(true);
   const [departments, setDepartments] = useState<DepartmentCombo[]>([]);
+  const [branches, setBranches] = useState<BranchCombo[]>([]);
+  const [shifts, setShiftes] = useState<ShiftCombo[]>([]);
 
   // Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -84,6 +88,8 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
   useEffect(() => {
     loadEmployees();
     loadDepartments();
+    loadBranches();
+    loadShift();
   }, []);
 
   useEffect(() => {
@@ -116,6 +122,7 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
         role: e.role,
         department: e.department,
         branchId: e.branchId,
+        shiftId: e.shiftId,
         employmentType: e.employmentType,
         joinDate: e.joinDate?.split("T")[0],
         status: e.status,
@@ -134,6 +141,24 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
     }
   };
 
+  const loadBranches = async () => {
+    try {
+      const data = await getBranchCombo();
+      setBranches(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadShift = async () => {
+    try {
+      const data = await getShiftCombo();
+      setShiftes(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const filteredEmployees = employees.filter((e) => {
     const matchesSearch =
       e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -148,7 +173,7 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
     currentPage * ITEMS_PER_PAGE,
   );
 
-  const getBranchName = (id?: string) =>
+  const getBranchName = (id?: number) =>
     branches.find((b) => b.id === id)?.name || "Unknown";
 
   const handleOpenAdd = () => {
@@ -165,6 +190,7 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
       branchId: "",
       employmentType: "",
       joinDate: null,
+      shiftId: "",
       status: "Active",
       location: "",
 
@@ -232,6 +258,9 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
             content: null,
           })),
         };
+
+        console.log(payload, "payloaaaaaaaaaaaaaaaaaaaaaad");
+
         await api.post("/Employee", payload);
 
         await loadEmployees();
@@ -477,14 +506,21 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                   Branch
                 </label>
+
                 <select
-                  value={formData.branchId || ""}
+                  value={formData.branchId ?? ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, branchId: e.target.value })
+                    setFormData({
+                      ...formData,
+                      branchId: e.target.value
+                        ? Number(e.target.value)
+                        : undefined,
+                    })
                   }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500"
                 >
-                  <option value="">Select...</option>
+                  <option value="">Select Branch</option>
+
                   {branches.map((b) => (
                     <option key={b.id} value={b.id}>
                       {b.name}
@@ -524,6 +560,32 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
                   <option>Terminated</option>
                 </select>
               </div>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                Shift
+              </label>
+
+              <select
+                value={formData.shiftId ?? ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    shiftId: e.target.value
+                      ? Number(e.target.value)
+                      : undefined,
+                  })
+                }
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">Select Shift</option>
+
+                {shifts.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
@@ -812,6 +874,14 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
                   Join Date
                 </p>
                 <p className="text-slate-800 font-medium">{emp.joinDate}</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase">
+                  Shift
+                </p>
+                <p className="text-slate-800 font-medium">
+                  {shifts.find((s) => s.id === emp.shiftId)?.name || "-"}
+                </p>
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-400 uppercase">

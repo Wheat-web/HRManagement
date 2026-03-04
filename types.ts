@@ -148,8 +148,8 @@ export interface Employee {
   paymentFrequency: PaymentFrequency;
   currency: string;
   location: string;
-  branchId: string; // Link to Branch
-  shiftId: string; // Link to Shift
+  branchId: number; // Link to Branch
+  shiftId: number; // Link to Shift
   // Expanded Fields
 
   phone?: string;
