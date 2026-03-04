@@ -93,10 +93,6 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({
   const loadDepartments = async () => {
     try {
       const data = await getDepartmentCombo();
-      console.log(
-        data,
-        "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
-      );
       setDepartments(data);
     } catch (err) {
       console.error(err);

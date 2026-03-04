@@ -114,10 +114,10 @@ export interface Department {
 }
 
 export interface Shift {
-  id: string;
+  id: number;
   name: string;
-  startTime: string; // e.g. "09:00"
-  endTime: string; // e.g. "17:00"
+  startTime: string; 
+  endTime: string; 
   color: string;
 }
 
