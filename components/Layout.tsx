@@ -251,6 +251,13 @@ const Layout: React.FC<LayoutProps> = ({
         label: "Messages",
         icon: <Mail size={20} />,
       });
+
+    if (hasPermission("settings.view"))
+      items.push({
+        id: "settings",
+        label: "Settings",
+        icon: <Settings size={20} />,
+      });
     return items;
   };
 
@@ -304,20 +311,6 @@ const Layout: React.FC<LayoutProps> = ({
         </nav>
 
         <div className="p-4 border-t border-slate-800 bg-slate-900 shrink-0">
-          <button
-            onClick={() => {
-              onNavigate("settings");
-              setIsMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-4 ${
-              currentView === "settings"
-                ? "bg-indigo-600 text-white"
-                : "text-slate-400 hover:text-white hover:bg-slate-800"
-            }`}
-          >
-            <Settings size={20} /> Settings
-          </button>
-
           <div className="flex items-center gap-3 px-2 py-2 bg-slate-800 rounded-lg mb-2">
             <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-xs font-bold">
               {user?.name?.charAt(0) || "U"}
