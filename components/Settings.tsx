@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Role } from "../types";
 import {
   User,
@@ -42,6 +42,26 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
     weeklyDigest: true,
   });
 
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const response = await api.get("/Settings/user_profile");
+
+      setProfile({
+        name: response.data.fullName,
+        email: response.data.email,
+        role: role,
+        bio: response.data.bio || "",
+      });
+    } catch (error) {
+      console.error(error);
+      showToast("Failed to load profile", "error");
+    }
+  };
+
   const updatePassword = async () => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -60,9 +80,6 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
         newPassword: newPassword,
       });
 
-      console.log(response,"respoooooooooooooooooooooooooooooooooonsssssssssssssssssseeeeeeeeeeeeeeeeeeee");
-      
-
       showToast("Password updated successfully", "success");
 
       setCurrentPassword("");
@@ -78,12 +95,27 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
     }
   };
 
-  const handleSave = () => {
-    setIsSaving(true);
-    setTimeout(() => {
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+
+      await api.put("/Settings/user_profile", {
+        fullName: profile.name,
+        email: profile.email,
+        bio: profile.bio,
+        profileImage: "",
+      });
+
+      showToast("Profile updated successfully", "success");
+    } catch (error: any) {
+      if (error.response) {
+        showToast(error.response.data.message, "error");
+      } else {
+        showToast("Failed to update profile", "error");
+      }
+    } finally {
       setIsSaving(false);
-      showToast("Settings saved successfully", "success");
-    }, 1000);
+    }
   };
 
   const tabs = [
