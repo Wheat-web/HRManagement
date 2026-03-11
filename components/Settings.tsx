@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Role } from "../types";
 import {
   User,
@@ -26,24 +26,33 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [currencies, setCurrencies] = useState<any[]>([]);
+  const [selectedCurrency, setSelectedCurrency] = useState("");
+  const [timeZones, setTimeZones] = useState<any[]>([]);
+  const [selectedTimeZone, setSelectedTimeZone] = useState("");
 
-  // Mock Form State
   const [profile, setProfile] = useState({
-    name: "Jane Doe",
-    email: isAdmin ? "admin@peoplecore.ai" : "jane.doe@example.com",
+    name: "",
+    email: "",
     role: role,
-    bio: "Experienced professional with a focus on HR operations and team management.",
+    bio: "",
+    profileImage: "",
   });
 
-  const [notifications, setNotifications] = useState<any>({
-    emailAlerts: true,
-    smsAlerts: false,
-    appAlerts: true,
-    weeklyDigest: true,
+  const [notifications, setNotifications] = useState({
+    EmailAlerts: false,
+    SMSNotifications: false,
+    InAppNotifications: false,
+    WeeklyDigest: false,
   });
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     loadProfile();
+    loadNotifications();
+    loadCurrencies();
+    loadTimeZones();
   }, []);
 
   const loadProfile = async () => {
@@ -55,10 +64,50 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
         email: response.data.email,
         role: role,
         bio: response.data.bio || "",
+        profileImage: response.data.profileImage || "",
       });
     } catch (error) {
       console.error(error);
       showToast("Failed to load profile", "error");
+    }
+  };
+
+  const loadNotifications = async () => {
+    try {
+      const res = await api.get("/Settings/notification");
+
+      console.log(res, "ressssssssssssssssss");
+
+      setNotifications({
+        emailAlerts: res.data.emailAlerts,
+        smsNotifications: res.data.smsNotifications,
+        inAppNotifications: res.data.inAppNotifications,
+        weeklyDigest: res.data.weeklyDigest,
+      });
+    } catch (error) {
+      console.error(error);
+      showToast("Failed to load notifications", "error");
+    }
+  };
+
+  const loadCurrencies = async () => {
+    try {
+      const res = await api.get("/Settings/currencyCombo");
+
+      setCurrencies(res.data);
+    } catch (error) {
+      console.error(error);
+      showToast("Failed to load currencies", "error");
+    }
+  };
+
+  const loadTimeZones = async () => {
+    try {
+      const res = await api.get("/Settings/timezoneCombo");
+      setTimeZones(res.data);
+    } catch (error) {
+      console.error(error);
+      showToast("Failed to load timezones", "error");
     }
   };
 
@@ -103,7 +152,7 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
         fullName: profile.name,
         email: profile.email,
         bio: profile.bio,
-        profileImage: "",
+        profileImage: profile.profileImage,
       });
 
       showToast("Profile updated successfully", "success");
@@ -116,6 +165,47 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const saveNotifications = async () => {
+    try {
+      await api.put("/Settings/notification", {
+        emailAlerts: notifications.emailAlerts,
+        smsNotifications: notifications.smsNotifications,
+        inAppNotifications: notifications.inAppNotifications,
+        weeklyDigest: notifications.weeklyDigest,
+      });
+
+      showToast("Notification settings updated", "success");
+    } catch (error) {
+      console.error(error);
+      showToast("Failed to update notifications", "error");
+    }
+  };
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageUpload = (e: any) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 1024 * 1024) {
+      showToast("Image must be less than 1MB", "error");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      setProfile((prev) => ({
+        ...prev,
+        profileImage: reader.result as string,
+      }));
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const tabs = [
@@ -137,14 +227,49 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
       case "profile":
         return (
           <div className="space-y-6 animate-in fade-in">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-bold text-slate-800">Profile</h3>
+
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+              >
+                <Save size={16} />
+                {isSaving ? "Saving..." : "Save"}
+              </button>
+            </div>
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center text-2xl font-bold text-slate-500">
-                {profile.name.charAt(0)}
+              <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center text-2xl font-bold text-slate-500">
+                {profile.profileImage ? (
+                  <img
+                    key={profile.profileImage}
+                    src={profile.profileImage}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  profile.name.charAt(0)
+                )}
               </div>
+
               <div>
-                <button className="text-sm text-indigo-600 font-medium hover:underline">
+                <button
+                  type="button"
+                  onClick={handleButtonClick}
+                  className="text-sm text-indigo-600 font-medium hover:underline"
+                >
                   Change Avatar
                 </button>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+
                 <p className="text-xs text-slate-400">
                   JPG, GIF or PNG. 1MB Max.
                 </p>
@@ -193,9 +318,19 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
       case "notifications":
         return (
           <div className="space-y-6 animate-in fade-in">
-            <h3 className="font-bold text-slate-800 text-lg mb-4">
-              Alert Preferences
-            </h3>
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-slate-800 text-lg">
+                Alert Preferences
+              </h3>
+
+              <button
+                onClick={saveNotifications}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+              >
+                <Save size={16} />
+                Save Preferences
+              </button>
+            </div>
             <div className="space-y-4">
               {[
                 {
@@ -204,12 +339,12 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
                   desc: "Receive daily summaries and urgent updates via email.",
                 },
                 {
-                  key: "smsAlerts",
+                  key: "smsNotifications",
                   label: "SMS Notifications",
                   desc: "Get text messages for critical security alerts.",
                 },
                 {
-                  key: "appAlerts",
+                  key: "inAppNotifications",
                   label: "In-App Notifications",
                   desc: "Show badges and popups within the dashboard.",
                 },
@@ -251,6 +386,19 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
       case "company":
         return (
           <div className="space-y-6 animate-in fade-in">
+            {/* Section Header */}
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-slate-800 text-lg">
+                Company Settings
+              </h3>
+
+              <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                <Save size={16} />
+                Save Changes
+              </button>
+            </div>
+
+            {/* Form Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -261,6 +409,7 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Tax ID / EIN
@@ -270,34 +419,55 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Timezone
                 </label>
-                <select className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                  <option>Eastern Time (US & Canada)</option>
-                  <option>Pacific Time (US & Canada)</option>
-                  <option>UTC</option>
+                <select
+                  value={selectedTimeZone}
+                  onChange={(e) => setSelectedTimeZone(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">Select TimeZone</option>
+
+                  {timeZones.map((c: any) => (
+                    <option key={c.timeZoneId} value={c.timeZoneId}>
+                      {c.timeZoneName} ({c.utcOffset})
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Primary Currency
                 </label>
-                <select className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                  <option>USD ($)</option>
-                  <option>EUR (€)</option>
-                  <option>GBP (£)</option>
+                <select
+                  value={selectedCurrency}
+                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">Select Currency</option>
+
+                  {currencies.map((c: any) => (
+                    <option key={c.currencyId} value={c.currencyId}>
+                      {c.currencyCode} ({c.currencySymbol})
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
 
+            {/* Branding */}
             <div className="pt-6 border-t border-slate-100">
               <h3 className="font-bold text-slate-800 mb-4">Branding</h3>
+
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center text-xs text-slate-400">
                   Logo
                 </div>
+
                 <button className="text-sm font-medium text-indigo-600 hover:underline">
                   Upload Logo
                 </button>
@@ -533,7 +703,7 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
             Manage your profile, preferences, and company configuration.
           </p>
         </div>
-        <button
+        {/* <button
           onClick={handleSave}
           disabled={isSaving}
           className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 shadow-sm transition-all"
@@ -545,7 +715,7 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
               <Save size={18} /> Save Changes
             </>
           )}
-        </button>
+        </button> */}
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[600px]">
