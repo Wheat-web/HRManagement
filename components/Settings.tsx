@@ -30,6 +30,12 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
   const [selectedCurrency, setSelectedCurrency] = useState("");
   const [timeZones, setTimeZones] = useState<any[]>([]);
   const [selectedTimeZone, setSelectedTimeZone] = useState("");
+  const [company, setCompany] = useState({
+    companyName: "",
+    taxId: "",
+    timeZoneId: "",
+    currencyId: "",
+  });
 
   const [profile, setProfile] = useState({
     name: "",
@@ -53,6 +59,7 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
     loadNotifications();
     loadCurrencies();
     loadTimeZones();
+    loadCompanyDetails();
   }, []);
 
   const loadProfile = async () => {
@@ -75,9 +82,6 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
   const loadNotifications = async () => {
     try {
       const res = await api.get("/Settings/notification");
-
-      console.log(res, "ressssssssssssssssss");
-
       setNotifications({
         emailAlerts: res.data.emailAlerts,
         smsNotifications: res.data.smsNotifications,
@@ -93,7 +97,6 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
   const loadCurrencies = async () => {
     try {
       const res = await api.get("/Settings/currencyCombo");
-
       setCurrencies(res.data);
     } catch (error) {
       console.error(error);
@@ -108,6 +111,23 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
     } catch (error) {
       console.error(error);
       showToast("Failed to load timezones", "error");
+    }
+  };
+
+  const loadCompanyDetails = async () => {
+    try {
+      const res = await api.get("/Settings/company_profile");
+      setCompany({
+        companyName: res.data.companyName,
+        taxId: res.data.taxId,
+        timeZoneId: res.data.timeZoneId,
+        currencyId: res.data.currencyId,
+      });
+
+      setSelectedTimeZone(res.data.timeZoneId);
+      setSelectedCurrency(res.data.currencyId);
+    } catch (error) {
+      showToast("Failed to load Company Details", "error");
     }
   };
 
@@ -180,6 +200,29 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
     } catch (error) {
       console.error(error);
       showToast("Failed to update notifications", "error");
+    }
+  };
+
+  const saveCompanyDetails = async () => {
+    try {
+      setIsSaving(true);
+
+      await api.put("/Settings/company_profile", {
+        companyName: company.companyName,
+        taxId: company.taxId,
+        timeZoneId: company.timeZoneId,
+        currencyId: company.currencyId,
+      });
+
+      showToast("Company profile updated successfully", "success");
+    } catch (error: any) {
+      if (error.response) {
+        showToast(error.response.data.message || "Update failed", "error");
+      } else {
+        showToast("Failed to update company profile", "error");
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -391,10 +434,13 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
               <h3 className="font-bold text-slate-800 text-lg">
                 Company Settings
               </h3>
-
-              <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+              <button
+                onClick={saveCompanyDetails}
+                disabled={isSaving}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+              >
                 <Save size={16} />
-                Save Changes
+                {isSaving ? "Saving..." : "Save Changes"}
               </button>
             </div>
 
@@ -405,8 +451,11 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
                   Company Name
                 </label>
                 <input
-                  defaultValue="PeopleCore Inc."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={company.companyName}
+                  onChange={(e) =>
+                    setCompany({ ...company, companyName: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
                 />
               </div>
 
@@ -415,8 +464,11 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
                   Tax ID / EIN
                 </label>
                 <input
-                  defaultValue="XX-XXXXXXX"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={company.taxId}
+                  onChange={(e) =>
+                    setCompany({ ...company, taxId: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
                 />
               </div>
 
@@ -425,8 +477,12 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
                   Timezone
                 </label>
                 <select
-                  value={selectedTimeZone}
-                  onChange={(e) => setSelectedTimeZone(e.target.value)}
+                  value={company.timeZoneId}
+                  onChange={(e) =>
+                    setCompany({ ...company, timeZoneId: e.target.value })
+                  }
+                  // value={selectedTimeZone}
+                  // onChange={(e) => setSelectedTimeZone(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">Select TimeZone</option>
@@ -444,8 +500,12 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
                   Primary Currency
                 </label>
                 <select
-                  value={selectedCurrency}
-                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  value={company.currencyId}
+                  onChange={(e) =>
+                    setCompany({ ...company, currencyId: e.target.value })
+                  }
+                  // value={selectedCurrency}
+                  // onChange={(e) => setSelectedCurrency(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">Select Currency</option>
