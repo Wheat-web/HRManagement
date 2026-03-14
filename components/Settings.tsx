@@ -35,6 +35,7 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
     taxId: "",
     timeZoneId: "",
     currencyId: "",
+    logo: "",
   });
 
   const [profile, setProfile] = useState({
@@ -122,6 +123,7 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
         taxId: res.data.taxId,
         timeZoneId: res.data.timeZoneId,
         currencyId: res.data.currencyId,
+        logo: res.data.logo || "",
       });
 
       setSelectedTimeZone(res.data.timeZoneId);
@@ -212,6 +214,7 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
         taxId: company.taxId,
         timeZoneId: company.timeZoneId,
         currencyId: company.currencyId,
+        logo: company.logo,
       });
 
       showToast("Company profile updated successfully", "success");
@@ -245,6 +248,27 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
       setProfile((prev) => ({
         ...prev,
         profileImage: reader.result as string,
+      }));
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleLogoUpload = (e: any) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 1024 * 1024) {
+      showToast("Logo must be less than 1MB", "error");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      setCompany((prev) => ({
+        ...prev,
+        logo: reader.result as string,
       }));
     };
 
@@ -524,13 +548,37 @@ const Settings: React.FC<SettingsProps> = ({ role }) => {
               <h3 className="font-bold text-slate-800 mb-4">Branding</h3>
 
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center text-xs text-slate-400">
-                  Logo
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 border">
+                  {company.logo ? (
+                    <img
+                      src={company.logo}
+                      alt="logo"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
+                      Logo
+                    </div>
+                  )}
                 </div>
 
-                <button className="text-sm font-medium text-indigo-600 hover:underline">
-                  Upload Logo
-                </button>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-sm font-medium text-indigo-600 hover:underline"
+                  >
+                    Upload Logo
+                  </button>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    ref={fileInputRef}
+                    className="hidden"
+                  />
+                </div>
               </div>
             </div>
           </div>
