@@ -354,3 +354,33 @@ export interface Permission {
   action: string;
   code: string; // module.action
 }
+
+export type OnboardingRole = 'HR' | 'Candidate' | 'Manager' | 'IT';
+
+export interface WorkflowAction {
+  id: string;
+  label: string;
+  type: 'form' | 'upload' | 'acknowledge' | 'api_call';
+  requiredRole: OnboardingRole;
+  status: 'pending' | 'completed' | 'blocked';
+  data?: any; // Form schema or upload details
+}
+
+export interface WorkflowStep {
+  id: string;
+  title: string;
+  description: string;
+  status: 'locked' | 'active' | 'completed';
+  actions: WorkflowAction[];
+  dependsOn?: string[]; // IDs of steps that must be completed first
+}
+
+export interface OnboardingWorkflow {
+  id: string;
+  employeeId: string;
+  templateId: string;
+  title: string;
+  status: 'in_progress' | 'completed';
+  currentStepId: string;
+  steps: WorkflowStep[];
+}

@@ -3,7 +3,7 @@ import api from "@/services/api";
 export interface CandidateCombo {
   CandidateId:number,
   FullName:string,
-  TargetRole:string
+  TargetRole:string,
 }
 
 export const getCandidates = async () => {
@@ -45,5 +45,10 @@ export const deleteCandidate = async (id: number) => {
 
 export const getCandidateCombo = async ():Promise <CandidateCombo[]> => {
   const res = await api.get("/Candidate/combo");
+  return res.data;
+};
+
+export const getOfferedCandidateCombo = async (): Promise<CandidateCombo[]> => {
+  const res = await api.get("/Candidate/combo?offered=true");
   return res.data;
 };

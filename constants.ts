@@ -1,4 +1,5 @@
 import { PermissionNode, Candidate, Role, AuditLog, PolicyDocument, HROpsRequest, Department, Employee, PayrollRecord, LeaveRecord, CompensationChange, PerformanceReview, LetterTemplate, Shift, AttendanceRecord, Message, Interview, RoleDefinition, JobOpening, Branch } from "./types";
+import { OnboardingWorkflow } from './types';
 
 export const MOCK_BRANCHES: Branch[] = [
   // { id: 'b1', name: 'HQ - New York', location: 'New York, USA', currency: 'USD', timezone: 'EST', headCount: 45, manager: 'Michael Scott', isHeadquarters: true },
@@ -440,3 +441,127 @@ export const PERMISSION_TREE: PermissionNode[] = [
 //     permissions: ['view_self']
 //   }
 // ];
+
+
+export const MOCK_WORKFLOWS: Record<string, OnboardingWorkflow> = {
+  'e_new_1': {
+    id: 'wf_1',
+    employeeId: 'e_new_1',
+    templateId: 'tpl_standard',
+    title: 'Standard Onboarding',
+    status: 'in_progress',
+    currentStepId: 'step_1',
+    steps: [
+      {
+        id: 'step_1',
+        title: 'Background Check & Documents',
+        description: 'Candidate must upload required documents and HR must verify them.',
+        status: 'active',
+        actions: [
+          {
+            id: 'action_1_1',
+            label: 'Upload ID Document',
+            type: 'upload',
+            requiredRole: 'Candidate',
+            status: 'completed',
+          },
+          {
+            id: 'action_1_2',
+            label: 'Verify Documents',
+            type: 'acknowledge',
+            requiredRole: 'HR',
+            status: 'pending',
+          }
+        ]
+      },
+      {
+        id: 'step_2',
+        title: 'IT Provisioning',
+        description: 'IT department needs to provision laptop and accounts.',
+        status: 'locked',
+        dependsOn: ['step_1'],
+        actions: [
+          {
+            id: 'action_2_1',
+            label: 'Select Equipment',
+            type: 'form',
+            requiredRole: 'Manager',
+            status: 'pending',
+            data: {
+              fields: [
+                { name: 'laptopType', label: 'Laptop Type', type: 'select', options: ['MacBook Pro', 'Dell XPS'] }
+              ]
+            }
+          },
+          {
+            id: 'action_2_2',
+            label: 'Provision Accounts',
+            type: 'api_call',
+            requiredRole: 'IT',
+            status: 'pending',
+          }
+        ]
+      },
+      {
+        id: 'step_3',
+        title: 'Welcome & Orientation',
+        description: 'First day orientation and manager welcome.',
+        status: 'locked',
+        dependsOn: ['step_2'],
+        actions: [
+          {
+            id: 'action_3_1',
+            label: 'Schedule Welcome Meeting',
+            type: 'form',
+            requiredRole: 'Manager',
+            status: 'pending',
+            data: {
+              fields: [
+                { name: 'meetingDate', label: 'Meeting Date', type: 'date' }
+              ]
+            }
+          },
+          {
+            id: 'action_3_2',
+            label: 'Attend Orientation',
+            type: 'acknowledge',
+            requiredRole: 'Candidate',
+            status: 'pending',
+          }
+        ]
+      }
+    ]
+  },
+  'e_new_2': {
+    id: 'wf_2',
+    employeeId: 'e_new_2',
+    templateId: 'tpl_executive',
+    title: 'Executive Onboarding',
+    status: 'in_progress',
+    currentStepId: 'step_1',
+    steps: [
+      {
+        id: 'step_1',
+        title: 'Executive Briefing',
+        description: 'Review company strategy and sign NDA.',
+        status: 'active',
+        actions: [
+          {
+            id: 'action_1_1',
+            label: 'Sign NDA',
+            type: 'upload',
+            requiredRole: 'Candidate',
+            status: 'pending',
+          },
+          {
+            id: 'action_1_2',
+            label: 'Schedule Board Meet',
+            type: 'form',
+            requiredRole: 'HR',
+            status: 'pending',
+          }
+        ]
+      }
+    ]
+  }
+};
